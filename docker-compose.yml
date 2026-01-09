@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # API FastAPI
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: mspr_api
+    ports:
+      - "8000:8000"
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+    volumes:
+      - ./api:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - etl
+    networks:
+      - mspr_network
+
+  # Interface Admin Streamlit
+  streamlit:
+    build:
+      context: ./streamlit
+      dockerfile: Dockerfile
+    container_name: mspr_streamlit
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://api:8000
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+    volumes:
+      - ./streamlit:/app
+    command: streamlit run app.py --server.port 8501 --server.address 0.0.0.0
+    depends_on:
+      - api
+    networks:
+      - mspr_network
+
+  # Service ETL
+  etl:
+    build:
+      context: ./etl
+      dockerfile: Dockerfile
+    container_name: mspr_etl
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+      - ETL_SCHEDULE=${ETL_SCHEDULE:-0 */6 * * *}
+    volumes:
+      - ./etl:/app
+      - ./etl/data:/app/data
+    command: python scheduler.py
+    networks:
+      - mspr_network
+    restart: unless-stopped
+
+networks:
+  mspr_network:
+    driver: bridge
+
+volumes:
+  etl_data:
+    driver: local
+
