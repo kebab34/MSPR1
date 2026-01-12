@@ -34,3 +34,4 @@ async def get_example(id: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+

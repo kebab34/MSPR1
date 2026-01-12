@@ -16,3 +16,4 @@ supabase_admin: Client = create_client(
     settings.SUPABASE_SERVICE_KEY
 )
 
+
