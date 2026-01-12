@@ -1,0 +1,71 @@
+# MCD – Modèle Conceptuel de Données (HealthAI Coach)
+
+## Entités
+
+### UTILISATEUR
+
+* id_utilisateur (PK)
+* age
+* sexe
+* poids
+* taille
+* abonnement (freemium / premium / premium+ / B2B)
+
+### OBJECTIF
+
+* id_objectif (PK)
+* type_objectif (perte de poids, prise de masse, sommeil, forme)
+* description
+
+### ALIMENT
+
+* id_aliment (PK)
+* nom
+* calories
+* proteines
+* glucides
+* lipides
+
+### JOURNAL_ALIMENTAIRE
+
+* id_journal (PK)
+* date_consommation
+* quantite
+
+### EXERCICE
+
+* id_exercice (PK)
+* nom
+* type
+* groupe_musculaire
+* niveau
+* equipement
+
+### SESSION_SPORT
+
+* id_session (PK)
+* date_session
+* duree
+* intensite
+
+### MESURE_BIOMETRIQUE
+
+* id_mesure (PK)
+* date_mesure
+* poids
+* frequence_cardiaque
+* sommeil
+* calories_brulees
+
+---
+
+## Relations (cardinalités)
+
+* UTILISATEUR (1,1) — possède — (0,N) OBJECTIF
+* UTILISATEUR (1,1) — remplit — (0,N) JOURNAL_ALIMENTAIRE
+* ALIMENT (1,1) — est consommé dans — (0,N) JOURNAL_ALIMENTAIRE
+* UTILISATEUR (1,1) — effectue — (0,N) SESSION_SPORT
+* SESSION_SPORT (1,N) — comprend — (1,N) EXERCICE
+* UTILISATEUR (1,1) — génère — (0,N) MESURE_BIOMETRIQUE
+
+---

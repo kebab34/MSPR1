@@ -1,0 +1,68 @@
+# MLD – Modèle Logique de Données (Relationnel)
+
+## UTILISATEUR
+
+* id_utilisateur PK
+* age
+* sexe
+* poids
+* taille
+* abonnement
+
+## OBJECTIF
+
+* id_objectif PK
+* type_objectif
+* description
+* id_utilisateur FK → UTILISATEUR.id_utilisateur
+
+## ALIMENT
+
+* id_aliment PK
+* nom
+* calories
+* proteines
+* glucides
+* lipides
+
+## JOURNAL_ALIMENTAIRE
+
+* id_journal PK
+* date_consommation
+* quantite
+* id_utilisateur FK → UTILISATEUR.id_utilisateur
+* id_aliment FK → ALIMENT.id_aliment
+
+## EXERCICE
+
+* id_exercice PK
+* nom
+* type
+* groupe_musculaire
+* niveau
+* equipement
+
+## SESSION_SPORT
+
+* id_session PK
+* date_session
+* duree
+* intensite
+* id_utilisateur FK → UTILISATEUR.id_utilisateur
+
+## SESSION_EXERCICE (table associative)
+
+* id_session PK, FK → SESSION_SPORT.id_session
+* id_exercice PK, FK → EXERCICE.id_exercice
+
+## MESURE_BIOMETRIQUE
+
+* id_mesure PK
+* date_mesure
+* poids
+* frequence_cardiaque
+* sommeil
+* calories_brulees
+* id_utilisateur FK → UTILISATEUR.id_utilisateur
+
+---
