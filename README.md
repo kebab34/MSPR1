@@ -179,6 +179,20 @@ Les tests peuvent être ajoutés dans chaque service :
 | `ETL_SCHEDULE` | Planning ETL (format cron) | `0 */6 * * *` |
 | `API_URL` | URL de l'API (pour Streamlit) | `http://api:8000` |
 
+## 🧪 Tests
+
+Des scripts de test sont disponibles dans le dossier `test/` :
+
+```bash
+# Test de configuration globale
+./test/test_config.sh
+
+# Test de connexion Supabase
+python3 test/supabase/test_supabase_connection.py
+```
+
+Voir `test/README.md` pour plus de détails.
+
 ## 🐳 Commandes Docker utiles
 
 ```bash
