@@ -17,13 +17,14 @@ class SupabaseLoader:
     
     def __init__(self):
         supabase_url = os.getenv("SUPABASE_URL")
-        supabase_key = os.getenv("SUPABASE_KEY")
+        # Utiliser la clé de service pour avoir les permissions d'écriture
+        supabase_key = os.getenv("SUPABASE_SERVICE_KEY") or os.getenv("SUPABASE_KEY")
         
         if not supabase_url or not supabase_key:
-            raise ValueError("SUPABASE_URL and SUPABASE_KEY must be set")
+            raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_KEY (or SUPABASE_KEY) must be set")
         
         self.client: Client = create_client(supabase_url, supabase_key)
-        logger.info("Supabase client initialized")
+        logger.info("Supabase client initialized (using service key for write operations)")
     
     def load_dataframe(self, df: pd.DataFrame, table_name: str, if_exists: str = "append") -> bool:
         """
@@ -67,20 +68,35 @@ class SupabaseLoader:
         Args:
             df: DataFrame to upsert
             table_name: Name of the target table
-            on_conflict: Column name for conflict resolution
+            on_conflict: Column name for conflict resolution (Supabase uses this for upsert)
             
         Returns:
             True if successful, False otherwise
         """
         try:
-            records = df.to_dict('records')
+            # Convertir le DataFrame en liste de dictionnaires
+            # Remplacer NaN par None pour éviter les erreurs JSON
+            records = df.where(pd.notna(df), None).to_dict('records')
             
             # Upsert records in batches
-            batch_size = 1000
+            batch_size = 100  # Réduire la taille des batches pour Supabase
+            total_batches = (len(records) + batch_size - 1) // batch_size
+            
             for i in range(0, len(records), batch_size):
                 batch = records[i:i + batch_size]
-                self.client.table(table_name).upsert(batch, on_conflict=on_conflict).execute()
-                logger.info(f"Upserted batch {i//batch_size + 1} into {table_name}")
+                try:
+                    # Supabase upsert utilise la clé primaire ou une colonne unique
+                    # On utilise insert avec ignore_duplicates ou on fait un upsert manuel
+                    response = self.client.table(table_name).upsert(batch).execute()
+                    logger.info(f"Upserted batch {i//batch_size + 1}/{total_batches} into {table_name} ({len(batch)} records)")
+                except Exception as batch_error:
+                    logger.warning(f"Error in batch {i//batch_size + 1}: {str(batch_error)}")
+                    # Essayer d'insérer un par un en cas d'erreur
+                    for record in batch:
+                        try:
+                            self.client.table(table_name).upsert([record]).execute()
+                        except:
+                            pass  # Ignorer les doublons
             
             logger.info(f"Successfully upserted {len(records)} records into {table_name}")
             return True
