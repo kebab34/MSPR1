@@ -9,7 +9,8 @@ test/
 ├── README.md                    # Ce fichier
 ├── test_config.sh              # Script de test de configuration globale
 └── supabase/                   # Tests spécifiques à Supabase
-    └── test_supabase_connection.py
+    ├── test_supabase_connection.py
+    └── test_database_tables.py
 ```
 
 ## Scripts disponibles
@@ -36,6 +37,25 @@ Script de test de connexion à Supabase :
 ```bash
 python3 test/supabase/test_supabase_connection.py
 ```
+
+### `supabase/test_database_tables.py`
+Script de test complet des tables de la base de données :
+- Vérification de l'existence de toutes les tables (11 tables)
+- Tests d'insertion pour chaque type de table
+- Tests de lecture et de jointures
+- Tests des relations entre tables
+- Nettoyage automatique des données de test
+
+**Usage :**
+```bash
+python3 test/supabase/test_database_tables.py
+```
+
+**Tables testées :**
+- utilisateurs, objectifs, aliments, recettes
+- journal_alimentaire, exercices, sessions_sport
+- session_exercices, mesures_biometriques, progressions
+- recette_aliments (relation N-N)
 
 ## Ajouter de nouveaux tests
 
