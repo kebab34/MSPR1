@@ -54,7 +54,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# CSS personnalisé pour un design plus moderne (v2.0)
+# CSS personnalisé pour un design plus moderne
 st.markdown("""
     <style>
     /* Style général */
@@ -64,13 +64,51 @@ st.markdown("""
         padding-right: 2rem;
     }
     
-    /* Sidebar améliorée */
+    /* Sidebar améliorée style v0 */
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #1f77b4 0%, #0d5a8a 100%);
     }
     
     [data-testid="stSidebar"] .css-1d391kg {
         background: transparent;
+    }
+    
+    /* Radio buttons dans sidebar style v0 */
+    [data-testid="stSidebar"] [data-baseweb="radio"] {
+        background: transparent;
+    }
+    
+    [data-testid="stSidebar"] [data-baseweb="radio"] label {
+        color: rgba(255, 255, 255, 0.8) !important;
+        font-weight: 500;
+        padding: 10px 12px !important;
+        border-radius: 8px;
+        transition: all 0.2s;
+        cursor: pointer !important;
+        display: block !important;
+        width: 100% !important;
+        margin: 4px 0 !important;
+    }
+    
+    [data-testid="stSidebar"] [data-baseweb="radio"] label:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+    }
+    
+    [data-testid="stSidebar"] [data-baseweb="radio"] input[checked="true"] + label,
+    [data-testid="stSidebar"] [data-baseweb="radio"] [checked="true"] + label {
+        background: rgba(255, 255, 255, 0.15) !important;
+        color: white !important;
+    }
+    
+    /* Assurer que les radio buttons sont cliquables */
+    [data-testid="stSidebar"] [data-baseweb="radio"] input {
+        cursor: pointer !important;
+        z-index: 1;
+    }
+    
+    [data-testid="stSidebar"] [data-baseweb="radio"] > div {
+        margin-bottom: 4px;
     }
     
     /* Titres */
@@ -86,19 +124,19 @@ st.markdown("""
         font-weight: bold;
     }
     
-    /* Cards avec ombre et effet */
+    /* Cards avec ombre et effet style v0 */
     .metric-card {
         background: white;
-        border-radius: 15px;
-        padding: 25px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         transition: transform 0.2s, box-shadow 0.2s;
         border: 1px solid #e5e7eb;
     }
     
     .metric-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.15), 0 4px 6px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
     }
     
     /* Info cards */
@@ -162,141 +200,59 @@ st.markdown("""
     .stTextInput > div > div > input {
         border-radius: 8px;
         border: 2px solid #e5e7eb;
-        transition: all 0.2s;
     }
     
     .stTextInput > div > div > input:focus {
         border-color: #1f77b4;
         box-shadow: 0 0 0 3px rgba(31, 119, 180, 0.1);
     }
-    
-    /* Tableaux améliorés */
-    .dataframe {
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        overflow: hidden;
-    }
-    
-    .dataframe thead {
-        background: linear-gradient(135deg, #1f77b4 0%, #0d5a8a 100%);
-        color: white;
-    }
-    
-    .dataframe thead th {
-        font-weight: 600;
-        padding: 12px;
-    }
-    
-    .dataframe tbody tr {
-        transition: background-color 0.2s;
-    }
-    
-    .dataframe tbody tr:hover {
-        background-color: #f8f9fa;
-    }
-    
-    /* Badges modernes */
-    .badge {
-        display: inline-block;
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: capitalize;
-    }
-    
-    .badge-primary {
-        background: #cfe2ff;
-        color: #1f77b4;
-    }
-    
-    .badge-success {
-        background: #d4edda;
-        color: #28a745;
-    }
-    
-    .badge-warning {
-        background: #fff3cd;
-        color: #ffc107;
-    }
-    
-    .badge-danger {
-        background: #f8d7da;
-        color: #dc3545;
-    }
-    
-    /* Cards modernes */
-    .modern-card {
-        background: white;
-        border-radius: 12px;
-        padding: 24px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-        border: 1px solid #e5e7eb;
-        transition: all 0.2s;
-    }
-    
-    .modern-card:hover {
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
-    }
-    
-    /* Headers améliorés */
-    .page-header {
-        background: linear-gradient(90deg, #1f77b4 0%, #ff7f0e 100%);
-        padding: 32px;
-        border-radius: 12px;
-        margin-bottom: 32px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    
-    /* Tabs améliorés */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        border-radius: 8px;
-        padding: 8px 16px;
-        transition: all 0.2s;
-    }
-    
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(90deg, #1f77b4 0%, #0d5a8a 100%);
-        color: white;
-    }
     </style>
 """, unsafe_allow_html=True)
 
-# Sidebar avec design amélioré (style v0)
+# Sidebar avec design v0
 st.sidebar.markdown("""
-    <div style='text-align: center; padding: 25px 0 30px 0;'>
-        <div style='display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 15px;'>
-            <div style='width: 40px; height: 40px; background: rgba(255, 255, 255, 0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center;'>
+    <div style='padding: 20px 0 25px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.2);'>
+        <div style='display: flex; align-items: center; gap: 12px; padding: 0 20px;'>
+            <div style='display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(255, 255, 255, 0.15); border-radius: 8px;'>
                 <span style='font-size: 1.5rem;'>💪</span>
             </div>
-            <div style='text-align: left;'>
-                <h1 style='color: white; margin: 0; font-size: 1.5rem; font-weight: bold;'>HealthAI</h1>
-                <p style='color: rgba(255, 255, 255, 0.8); margin: 2px 0 0 0; font-size: 0.75rem;'>Coach Personnel</p>
+            <div>
+                <h1 style='color: white; margin: 0; font-size: 1.25rem; font-weight: 700;'>HealthAI</h1>
+                <p style='color: rgba(255, 255, 255, 0.7); margin: 2px 0 0 0; font-size: 0.75rem;'>Coach Personnel</p>
             </div>
         </div>
     </div>
 """, unsafe_allow_html=True)
-st.sidebar.markdown("<div style='height: 1px; background: rgba(255, 255, 255, 0.2); margin: 15px 0;'></div>", unsafe_allow_html=True)
+
+# Navigation avec style v0
+st.sidebar.markdown("<div style='padding: 8px 0;'></div>", unsafe_allow_html=True)
 
 # Navigation
-page = st.sidebar.selectbox(
+nav_options = [
+    "🏠 Dashboard",
+    "🏋️ Exercices",
+    "👥 Utilisateurs",
+    "🍎 Aliments",
+    "⚙️ Configuration"
+]
+
+page = st.sidebar.radio(
     "Navigation",
-    [
-        "🏠 Accueil",
-        "📈 Dashboard",
-        "🏋️ Exercices",
-        "👥 Utilisateurs",
-        "🍎 Aliments",
-        "⚙️ Configuration"
-    ]
+    nav_options,
+    label_visibility="collapsed"
 )
 
+# Footer sidebar (enlevé pour éviter de bloquer les boutons)
+# st.sidebar.markdown("""
+#     <div style='padding: 15px 20px; border-top: 1px solid rgba(255, 255, 255, 0.2); margin-top: 20px;'>
+#         <p style='color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; margin: 0; text-align: center;'>
+#             Plateforme de santé connectée
+#         </p>
+#     </div>
+# """, unsafe_allow_html=True)
+
 # Main content
-if page == "🏠 Accueil":
+if page == "🏠 Dashboard":
     # Header avec gradient
     st.markdown("""
         <div style='background: linear-gradient(90deg, #1f77b4 0%, #ff7f0e 100%); 
@@ -310,125 +266,173 @@ if page == "🏠 Accueil":
     
     # Statut de l'API
     api_status = check_api_health()
-    status_color = "🟢" if api_status else "🔴"
-    status_text = "En ligne" if api_status else "Hors ligne"
     
-    # Métriques avec icônes
+    # Métriques avec style v0
     col1, col2, col3, col4 = st.columns(4)
     
-    with col1:
-        status_bg = "#d4edda" if api_status else "#f8d7da"
-        status_border = "#28a745" if api_status else "#dc3545"
-        st.markdown(f"""
-            <div class='metric-card' style='text-align: center; background: linear-gradient(135deg, {status_bg} 0%, white 100%); border-top: 4px solid {status_border};'>
-                <div style='font-size: 3.5rem; margin-bottom: 12px;'>{status_color}</div>
-                <div style='font-size: 1.1em; font-weight: 600; color: #1f77b4; margin-bottom: 5px;'>API Status</div>
-                <div style='color: #666; font-size: 0.95em;'>{status_text}</div>
-            </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        try:
-            exercices_count = len(get_data_from_api("/api/v1/exercices?limit=1000"))
+    try:
+        exercices = get_data_from_api("/api/v1/exercices?limit=1000")
+        utilisateurs = get_data_from_api("/api/v1/utilisateurs?limit=1000")
+        aliments = get_data_from_api("/api/v1/aliments?limit=1000")
+        
+        with col1:
+            status_bg = "from-emerald-50" if api_status else "from-red-50"
+            status_border = "border-t-emerald-500" if api_status else "border-t-red-500"
+            status_icon = "✅" if api_status else "❌"
+            status_text = "En ligne" if api_status else "Hors ligne"
+            status_desc = "Tous les services fonctionnent" if api_status else "Services indisponibles"
             st.markdown(f"""
-                <div class='metric-card' style='text-align: center; background: linear-gradient(135deg, #fff3cd 0%, white 100%); border-top: 4px solid #ffc107;'>
-                    <div style='font-size: 3.5rem; margin-bottom: 12px;'>🏋️</div>
-                    <div style='font-size: 2.8rem; font-weight: bold; color: #1f77b4; margin-bottom: 5px;'>{exercices_count}</div>
-                    <div style='color: #666; font-size: 0.95em; font-weight: 500;'>Exercices</div>
-                </div>
-            """, unsafe_allow_html=True)
-        except:
-            st.markdown("""
-                <div class='metric-card' style='text-align: center; background: linear-gradient(135deg, #fff3cd 0%, white 100%); border-top: 4px solid #ffc107;'>
-                    <div style='font-size: 3.5rem; margin-bottom: 12px;'>🏋️</div>
-                    <div style='font-size: 2.8rem; font-weight: bold; color: #1f77b4; margin-bottom: 5px;'>N/A</div>
-                    <div style='color: #666; font-size: 0.95em; font-weight: 500;'>Exercices</div>
+                <div class='metric-card' style='background: linear-gradient(135deg, #d4edda 0%, white 100%); border-top: 4px solid #28a745;'>
+                    <div style='display: flex; align-items: start; justify-content: space-between;'>
+                        <div>
+                            <p style='font-size: 0.875rem; font-weight: 500; color: #666; margin: 0 0 8px 0;'>API Status</p>
+                            <p style='font-size: 1.875rem; font-weight: 700; color: #1f77b4; margin: 0 0 4px 0;'>{status_text}</p>
+                            <p style='font-size: 0.75rem; color: #999; margin: 0;'>{status_desc}</p>
+                        </div>
+                        <div style='background: white; border-radius: 8px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);'>
+                            <span style='font-size: 1.5rem;'>{status_icon}</span>
+                        </div>
+                    </div>
                 </div>
             """, unsafe_allow_html=True)
     
-    with col3:
-        try:
-            users_count = len(get_data_from_api("/api/v1/utilisateurs?limit=1000"))
+        with col2:
+            exercices_count = len(exercices) if exercices else 0
             st.markdown(f"""
-                <div class='metric-card' style='text-align: center; background: linear-gradient(135deg, #cfe2ff 0%, white 100%); border-top: 4px solid #1f77b4;'>
-                    <div style='font-size: 3.5rem; margin-bottom: 12px;'>👥</div>
-                    <div style='font-size: 2.8rem; font-weight: bold; color: #1f77b4; margin-bottom: 5px;'>{users_count}</div>
-                    <div style='color: #666; font-size: 0.95em; font-weight: 500;'>Utilisateurs</div>
+                <div class='metric-card' style='background: linear-gradient(135deg, #fff3cd 0%, white 100%); border-top: 4px solid #ffc107;'>
+                    <div style='display: flex; align-items: start; justify-content: space-between;'>
+                        <div>
+                            <p style='font-size: 0.875rem; font-weight: 500; color: #666; margin: 0 0 8px 0;'>Exercices</p>
+                            <p style='font-size: 1.875rem; font-weight: 700; color: #1f77b4; margin: 0 0 4px 0;'>{exercices_count}</p>
+                            <p style='font-size: 0.75rem; color: #999; margin: 0;'>Base d'exercices</p>
+                        </div>
+                        <div style='background: white; border-radius: 8px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); color: #ffc107;'>
+                            <span style='font-size: 1.5rem;'>🏋️</span>
+                        </div>
+                    </div>
                 </div>
             """, unsafe_allow_html=True)
-        except:
-            st.markdown("""
-                <div class='metric-card' style='text-align: center; background: linear-gradient(135deg, #cfe2ff 0%, white 100%); border-top: 4px solid #1f77b4;'>
-                    <div style='font-size: 3.5rem; margin-bottom: 12px;'>👥</div>
-                    <div style='font-size: 2.8rem; font-weight: bold; color: #1f77b4; margin-bottom: 5px;'>N/A</div>
-                    <div style='color: #666; font-size: 0.95em; font-weight: 500;'>Utilisateurs</div>
-                </div>
-            """, unsafe_allow_html=True)
-    
-    with col4:
-        try:
-            aliments_count = len(get_data_from_api("/api/v1/aliments?limit=1000"))
+        
+        with col3:
+            users_count = len(utilisateurs) if utilisateurs else 0
             st.markdown(f"""
-                <div class='metric-card' style='text-align: center; background: linear-gradient(135deg, #f8d7da 0%, white 100%); border-top: 4px solid #dc3545;'>
-                    <div style='font-size: 3.5rem; margin-bottom: 12px;'>🍎</div>
-                    <div style='font-size: 2.8rem; font-weight: bold; color: #1f77b4; margin-bottom: 5px;'>{aliments_count}</div>
-                    <div style='color: #666; font-size: 0.95em; font-weight: 500;'>Aliments</div>
+                <div class='metric-card' style='background: linear-gradient(135deg, #cfe2ff 0%, white 100%); border-top: 4px solid #1f77b4;'>
+                    <div style='display: flex; align-items: start; justify-content: space-between;'>
+                        <div>
+                            <p style='font-size: 0.875rem; font-weight: 500; color: #666; margin: 0 0 8px 0;'>Utilisateurs</p>
+                            <p style='font-size: 1.875rem; font-weight: 700; color: #1f77b4; margin: 0 0 4px 0;'>{users_count}</p>
+                            <p style='font-size: 0.75rem; color: #999; margin: 0;'>Utilisateurs inscrits</p>
+                        </div>
+                        <div style='background: white; border-radius: 8px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); color: #1f77b4;'>
+                            <span style='font-size: 1.5rem;'>👥</span>
+                        </div>
+                    </div>
                 </div>
             """, unsafe_allow_html=True)
-        except:
-            st.markdown("""
-                <div class='metric-card' style='text-align: center; background: linear-gradient(135deg, #f8d7da 0%, white 100%); border-top: 4px solid #dc3545;'>
-                    <div style='font-size: 3.5rem; margin-bottom: 12px;'>🍎</div>
-                    <div style='font-size: 2.8rem; font-weight: bold; color: #1f77b4; margin-bottom: 5px;'>N/A</div>
-                    <div style='color: #666; font-size: 0.95em; font-weight: 500;'>Aliments</div>
+        
+        with col4:
+            aliments_count = len(aliments) if aliments else 0
+            st.markdown(f"""
+                <div class='metric-card' style='background: linear-gradient(135deg, #f8d7da 0%, white 100%); border-top: 4px solid #dc3545;'>
+                    <div style='display: flex; align-items: start; justify-content: space-between;'>
+                        <div>
+                            <p style='font-size: 0.875rem; font-weight: 500; color: #666; margin: 0 0 8px 0;'>Aliments</p>
+                            <p style='font-size: 1.875rem; font-weight: 700; color: #1f77b4; margin: 0 0 4px 0;'>{aliments_count}</p>
+                            <p style='font-size: 0.75rem; color: #999; margin: 0;'>Base nutritionnelle</p>
+                        </div>
+                        <div style='background: white; border-radius: 8px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); color: #dc3545;'>
+                            <span style='font-size: 1.5rem;'>🍎</span>
+                        </div>
+                    </div>
                 </div>
             """, unsafe_allow_html=True)
+    except:
+        st.error("Erreur lors du chargement des données")
     
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Section d'aide
-    col1, col2 = st.columns(2)
+    # KPIs Business style v0
+    st.markdown("### 💼 KPIs Business")
+    col1, col2, col3, col4 = st.columns(4)
     
-    with col1:
-        st.markdown("""
-            <div class='info-card' style='background: linear-gradient(135deg, #e3f2fd 0%, white 100%); border-left-color: #1f77b4;'>
-                <h3 style='color: #1f77b4; margin-top: 0; margin-bottom: 15px; font-size: 1.3em;'>💡 Navigation</h3>
-                <p style='margin-bottom: 12px; color: #555;'>Utilisez le menu de gauche pour accéder aux différentes sections :</p>
-                <ul style='margin: 0; padding-left: 20px; color: #555;'>
-                    <li style='margin-bottom: 8px;'><strong style='color: #1f77b4;'>Dashboard</strong> : Vue d'ensemble avec graphiques</li>
-                    <li style='margin-bottom: 8px;'><strong style='color: #1f77b4;'>Exercices</strong> : Gestion des exercices</li>
-                    <li style='margin-bottom: 8px;'><strong style='color: #1f77b4;'>Utilisateurs</strong> : Gestion des utilisateurs</li>
-                    <li style='margin-bottom: 8px;'><strong style='color: #1f77b4;'>Aliments</strong> : Base de données nutritionnelle</li>
-                </ul>
-            </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-            <div class='info-card' style='background: linear-gradient(135deg, #fff3e0 0%, white 100%); border-left-color: #ff7f0e;'>
-                <h3 style='color: #ff7f0e; margin-top: 0; margin-bottom: 15px; font-size: 1.3em;'>🚀 Fonctionnalités</h3>
-                <p style='margin-bottom: 12px; color: #555;'>Explorez les fonctionnalités disponibles :</p>
-                <ul style='margin: 0; padding-left: 20px; color: #555;'>
-                    <li style='margin-bottom: 8px;'>Recherche et filtres avancés</li>
-                    <li style='margin-bottom: 8px;'>Graphiques interactifs</li>
-                    <li style='margin-bottom: 8px;'>Statistiques en temps réel</li>
-                    <li style='margin-bottom: 8px;'>Gestion complète des données</li>
-                </ul>
-            </div>
-        """, unsafe_allow_html=True)
+    try:
+        if utilisateurs:
+            df_usr = pd.DataFrame(utilisateurs)
+            total_users = len(df_usr)
+            premium_users = len(df_usr[df_usr['type_abonnement'].isin(['premium', 'premium+', 'B2B'])]) if 'type_abonnement' in df_usr.columns else 0
+            conversion_rate = (premium_users / total_users * 100) if total_users > 0 else 0
+            
+            with col1:
+                st.markdown(f"""
+                    <div style='background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb;'>
+                        <div style='display: flex; align-items: center; gap: 16px;'>
+                            <div style='background: rgba(31, 119, 180, 0.1); border-radius: 8px; padding: 12px;'>
+                                <span style='font-size: 1.5rem; color: #1f77b4;'>📈</span>
+                            </div>
+                            <div>
+                                <p style='font-size: 0.875rem; color: #666; margin: 0 0 4px 0;'>Taux Conversion Premium</p>
+                                <p style='font-size: 1.5rem; font-weight: 700; color: #1f77b4; margin: 0;'>{conversion_rate:.1f}%</p>
+                            </div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+            
+            with col2:
+                st.markdown(f"""
+                    <div style='background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb;'>
+                        <div style='display: flex; align-items: center; gap: 16px;'>
+                            <div style='background: rgba(255, 127, 14, 0.1); border-radius: 8px; padding: 12px;'>
+                                <span style='font-size: 1.5rem; color: #ff7f0e;'>🎯</span>
+                            </div>
+                            <div>
+                                <p style='font-size: 0.875rem; color: #666; margin: 0 0 4px 0;'>Utilisateurs Premium</p>
+                                <p style='font-size: 1.5rem; font-weight: 700; color: #1f77b4; margin: 0;'>{premium_users}</p>
+                            </div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+            
+            with col3:
+                st.markdown(f"""
+                    <div style='background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb;'>
+                        <div style='display: flex; align-items: center; gap: 16px;'>
+                            <div style='background: rgba(16, 185, 129, 0.1); border-radius: 8px; padding: 12px;'>
+                                <span style='font-size: 1.5rem; color: #10b981;'>👥</span>
+                            </div>
+                            <div>
+                                <p style='font-size: 0.875rem; color: #666; margin: 0 0 4px 0;'>Utilisateurs Actifs</p>
+                                <p style='font-size: 1.5rem; font-weight: 700; color: #1f77b4; margin: 0;'>{total_users}</p>
+                            </div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+            
+            with col4:
+                if exercices:
+                    df_ex = pd.DataFrame(exercices)
+                    types_count = len(df_ex['type'].unique()) if 'type' in df_ex.columns else 0
+                    st.markdown(f"""
+                        <div style='background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb;'>
+                            <div style='display: flex; align-items: center; gap: 16px;'>
+                                <div style='background: rgba(245, 158, 11, 0.1); border-radius: 8px; padding: 12px;'>
+                                    <span style='font-size: 1.5rem; color: #f59e0b;'>💪</span>
+                                </div>
+                                <div>
+                                    <p style='font-size: 0.875rem; color: #666; margin: 0 0 4px 0;'>Types d'exercices</p>
+                                    <p style='font-size: 1.5rem; font-weight: 700; color: #1f77b4; margin: 0;'>{types_count}</p>
+                                </div>
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+    except:
+        pass
 
 elif page == "📈 Dashboard":
     st.markdown("""
-        <div class='page-header'>
-            <div style='display: flex; align-items: center; gap: 12px;'>
-                <div style='font-size: 2rem;'>📈</div>
-                <div>
-                    <h1 style='color: white; margin: 0; font-size: 2rem; font-weight: bold;'>Dashboard</h1>
-                    <p style='color: rgba(255, 255, 255, 0.9); margin: 8px 0 0 0; font-size: 1rem;'>
-                        Vue d'ensemble de votre plateforme de santé connectée
-                    </p>
-                </div>
-            </div>
+        <div style='background: linear-gradient(90deg, #1f77b4 0%, #ff7f0e 100%); 
+                    padding: 32px; border-radius: 12px; margin-bottom: 32px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
+            <h1 style='color: white; margin: 0; font-size: 1.875rem; font-weight: 700;'>📈 Dashboard</h1>
+            <p style='color: rgba(255, 255, 255, 0.8); margin: 8px 0 0 0; font-size: 1rem;'>Vue d'ensemble de vos données</p>
         </div>
     """, unsafe_allow_html=True)
     
@@ -566,14 +570,13 @@ elif page == "📈 Dashboard":
 
 elif page == "🏋️ Exercices":
     st.markdown("""
-        <div class='page-header'>
+        <div style='background: linear-gradient(90deg, #1f77b4 0%, #ff7f0e 100%); 
+                    padding: 32px; border-radius: 12px; margin-bottom: 32px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
             <div style='display: flex; align-items: center; gap: 12px;'>
-                <div style='font-size: 2rem;'>🏋️</div>
+                <span style='font-size: 2rem;'>🏋️</span>
                 <div>
-                    <h1 style='color: white; margin: 0; font-size: 2rem; font-weight: bold;'>Gestion des Exercices</h1>
-                    <p style='color: rgba(255, 255, 255, 0.9); margin: 8px 0 0 0; font-size: 1rem;'>
-                        Explorez et gérez votre base d'exercices
-                    </p>
+                    <h1 style='color: white; margin: 0; font-size: 1.875rem; font-weight: 700;'>Gestion des Exercices</h1>
+                    <p style='color: rgba(255, 255, 255, 0.8); margin: 4px 0 0 0; font-size: 1rem;'>Explorez et gérez votre base d'exercices</p>
                 </div>
             </div>
         </div>
@@ -777,16 +780,10 @@ elif page == "🏋️ Exercices":
 
 elif page == "👥 Utilisateurs":
     st.markdown("""
-        <div class='page-header'>
-            <div style='display: flex; align-items: center; gap: 12px;'>
-                <div style='font-size: 2rem;'>👥</div>
-                <div>
-                    <h1 style='color: white; margin: 0; font-size: 2rem; font-weight: bold;'>Gestion des Utilisateurs</h1>
-                    <p style='color: rgba(255, 255, 255, 0.9); margin: 8px 0 0 0; font-size: 1rem;'>
-                        Gérez vos utilisateurs et leurs abonnements
-                    </p>
-                </div>
-            </div>
+        <div style='background: linear-gradient(90deg, #1f77b4 0%, #ff7f0e 100%); 
+                    padding: 20px; border-radius: 10px; margin-bottom: 30px;'>
+            <h1 style='color: white; margin: 0;'>👥 Gestion des Utilisateurs</h1>
+            <p style='color: white; margin: 10px 0 0 0;'>Visualisez et gérez vos utilisateurs</p>
         </div>
     """, unsafe_allow_html=True)
     
@@ -968,14 +965,13 @@ elif page == "👥 Utilisateurs":
 
 elif page == "🍎 Aliments":
     st.markdown("""
-        <div class='page-header'>
+        <div style='background: linear-gradient(90deg, #1f77b4 0%, #ff7f0e 100%); 
+                    padding: 32px; border-radius: 12px; margin-bottom: 32px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
             <div style='display: flex; align-items: center; gap: 12px;'>
-                <div style='font-size: 2rem;'>🍎</div>
+                <span style='font-size: 2rem;'>🍎</span>
                 <div>
-                    <h1 style='color: white; margin: 0; font-size: 2rem; font-weight: bold;'>Gestion des Aliments</h1>
-                    <p style='color: rgba(255, 255, 255, 0.9); margin: 8px 0 0 0; font-size: 1rem;'>
-                        Base de données nutritionnelle complète
-                    </p>
+                    <h1 style='color: white; margin: 0; font-size: 1.875rem; font-weight: 700;'>Gestion des Aliments</h1>
+                    <p style='color: rgba(255, 255, 255, 0.8); margin: 4px 0 0 0; font-size: 1rem;'>Base de données nutritionnelle complète</p>
                 </div>
             </div>
         </div>
@@ -1179,16 +1175,10 @@ elif page == "🍎 Aliments":
 
 elif page == "⚙️ Configuration":
     st.markdown("""
-        <div class='page-header'>
-            <div style='display: flex; align-items: center; gap: 12px;'>
-                <div style='font-size: 2rem;'>⚙️</div>
-                <div>
-                    <h1 style='color: white; margin: 0; font-size: 2rem; font-weight: bold;'>Configuration & Outils</h1>
-                    <p style='color: rgba(255, 255, 255, 0.9); margin: 8px 0 0 0; font-size: 1rem;'>
-                        Gestion de la qualité des données et export
-                    </p>
-                </div>
-            </div>
+        <div style='background: linear-gradient(90deg, #1f77b4 0%, #ff7f0e 100%); 
+                    padding: 20px; border-radius: 10px; margin-bottom: 30px;'>
+            <h1 style='color: white; margin: 0;'>⚙️ Configuration & Outils</h1>
+            <p style='color: white; margin: 10px 0 0 0;'>Gestion de la qualité des données et export</p>
         </div>
     """, unsafe_allow_html=True)
     
