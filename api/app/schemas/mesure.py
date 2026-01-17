@@ -53,3 +53,4 @@ class MesureBiometriqueRead(MesureBiometriqueBase):
     class Config:
         from_attributes = True
 
+

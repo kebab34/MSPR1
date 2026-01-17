@@ -43,3 +43,4 @@ class JournalAlimentaireRead(JournalAlimentaireBase):
     class Config:
         from_attributes = True
 
+

@@ -97,3 +97,4 @@ async def delete_utilisateur(utilisateur_id: UUID):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression: {str(e)}")
 
+

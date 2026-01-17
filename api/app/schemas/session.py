@@ -56,3 +56,4 @@ class SessionSportRead(SessionSportBase):
     class Config:
         from_attributes = True
 
+

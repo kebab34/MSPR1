@@ -43,3 +43,4 @@ class ObjectifRead(ObjectifBase):
     class Config:
         from_attributes = True
 
+

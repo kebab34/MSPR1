@@ -46,3 +46,4 @@ class ExerciceRead(ExerciceBase):
     class Config:
         from_attributes = True
 
+

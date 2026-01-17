@@ -54,12 +54,23 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# CSS personnalisé pour un design plus moderne
+# CSS personnalisé pour un design plus moderne (v2.0)
 st.markdown("""
     <style>
     /* Style général */
     .main {
-        padding-top: 2rem;
+        padding-top: 1rem;
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+    
+    /* Sidebar améliorée */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #1f77b4 0%, #0d5a8a 100%);
+    }
+    
+    [data-testid="stSidebar"] .css-1d391kg {
+        background: transparent;
     }
     
     /* Titres */
@@ -75,49 +86,201 @@ st.markdown("""
         font-weight: bold;
     }
     
-    /* Sidebar */
-    .css-1d391kg {
-        background-color: #f0f2f6;
+    /* Cards avec ombre et effet */
+    .metric-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid #e5e7eb;
     }
     
-    /* Cards */
-    .stCard {
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.15), 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Info cards */
+    .info-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border-left: 5px solid;
+        transition: box-shadow 0.2s;
+    }
+    
+    .info-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     }
     
     /* Boutons */
     .stButton>button {
-        border-radius: 20px;
-        background-color: #1f77b4;
+        border-radius: 25px;
+        background: linear-gradient(90deg, #1f77b4 0%, #0d5a8a 100%);
         color: white;
-        font-weight: bold;
+        font-weight: 600;
+        border: none;
+        padding: 0.5rem 1.5rem;
+        transition: all 0.3s;
+    }
+    
+    .stButton>button:hover {
+        background: linear-gradient(90deg, #0d5a8a 0%, #1f77b4 100%);
+        transform: scale(1.05);
+        box-shadow: 0 4px 8px rgba(31, 119, 180, 0.3);
     }
     
     /* Dataframes */
     .dataframe {
         border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
     /* Success message */
     .success-box {
         background-color: #d4edda;
         border: 1px solid #c3e6cb;
-        border-radius: 5px;
-        padding: 10px;
+        border-radius: 8px;
+        padding: 15px;
         margin: 10px 0;
+    }
+    
+    /* Hide Streamlit default elements */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    /* Amélioration des selectbox */
+    .stSelectbox > div > div {
+        background-color: white;
+        border-radius: 8px;
+    }
+    
+    /* Amélioration des inputs */
+    .stTextInput > div > div > input {
+        border-radius: 8px;
+        border: 2px solid #e5e7eb;
+        transition: all 0.2s;
+    }
+    
+    .stTextInput > div > div > input:focus {
+        border-color: #1f77b4;
+        box-shadow: 0 0 0 3px rgba(31, 119, 180, 0.1);
+    }
+    
+    /* Tableaux améliorés */
+    .dataframe {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .dataframe thead {
+        background: linear-gradient(135deg, #1f77b4 0%, #0d5a8a 100%);
+        color: white;
+    }
+    
+    .dataframe thead th {
+        font-weight: 600;
+        padding: 12px;
+    }
+    
+    .dataframe tbody tr {
+        transition: background-color 0.2s;
+    }
+    
+    .dataframe tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    /* Badges modernes */
+    .badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+    
+    .badge-primary {
+        background: #cfe2ff;
+        color: #1f77b4;
+    }
+    
+    .badge-success {
+        background: #d4edda;
+        color: #28a745;
+    }
+    
+    .badge-warning {
+        background: #fff3cd;
+        color: #ffc107;
+    }
+    
+    .badge-danger {
+        background: #f8d7da;
+        color: #dc3545;
+    }
+    
+    /* Cards modernes */
+    .modern-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e5e7eb;
+        transition: all 0.2s;
+    }
+    
+    .modern-card:hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+    }
+    
+    /* Headers améliorés */
+    .page-header {
+        background: linear-gradient(90deg, #1f77b4 0%, #ff7f0e 100%);
+        padding: 32px;
+        border-radius: 12px;
+        margin-bottom: 32px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Tabs améliorés */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 8px;
+        padding: 8px 16px;
+        transition: all 0.2s;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(90deg, #1f77b4 0%, #0d5a8a 100%);
+        color: white;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Sidebar avec design amélioré
+# Sidebar avec design amélioré (style v0)
 st.sidebar.markdown("""
-    <div style='text-align: center; padding: 20px 0;'>
-        <h1 style='color: #1f77b4; margin: 0;'>💪 MSPR</h1>
-        <p style='color: #666; margin: 5px 0;'>Santé Connectée</p>
+    <div style='text-align: center; padding: 25px 0 30px 0;'>
+        <div style='display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 15px;'>
+            <div style='width: 40px; height: 40px; background: rgba(255, 255, 255, 0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center;'>
+                <span style='font-size: 1.5rem;'>💪</span>
+            </div>
+            <div style='text-align: left;'>
+                <h1 style='color: white; margin: 0; font-size: 1.5rem; font-weight: bold;'>HealthAI</h1>
+                <p style='color: rgba(255, 255, 255, 0.8); margin: 2px 0 0 0; font-size: 0.75rem;'>Coach Personnel</p>
+            </div>
+        </div>
     </div>
 """, unsafe_allow_html=True)
-st.sidebar.markdown("---")
+st.sidebar.markdown("<div style='height: 1px; background: rgba(255, 255, 255, 0.2); margin: 15px 0;'></div>", unsafe_allow_html=True)
 
 # Navigation
 page = st.sidebar.selectbox(
@@ -154,11 +317,13 @@ if page == "🏠 Accueil":
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
+        status_bg = "#d4edda" if api_status else "#f8d7da"
+        status_border = "#28a745" if api_status else "#dc3545"
         st.markdown(f"""
-            <div style='text-align: center; padding: 20px; background-color: #f0f2f6; border-radius: 10px;'>
-                <div style='font-size: 3rem; margin-bottom: 10px;'>{status_color}</div>
-                <div style='font-size: 1.2em; font-weight: bold; color: #1f77b4;'>API Status</div>
-                <div style='color: #666;'>{status_text}</div>
+            <div class='metric-card' style='text-align: center; background: linear-gradient(135deg, {status_bg} 0%, white 100%); border-top: 4px solid {status_border};'>
+                <div style='font-size: 3.5rem; margin-bottom: 12px;'>{status_color}</div>
+                <div style='font-size: 1.1em; font-weight: 600; color: #1f77b4; margin-bottom: 5px;'>API Status</div>
+                <div style='color: #666; font-size: 0.95em;'>{status_text}</div>
             </div>
         """, unsafe_allow_html=True)
     
@@ -166,18 +331,18 @@ if page == "🏠 Accueil":
         try:
             exercices_count = len(get_data_from_api("/api/v1/exercices?limit=1000"))
             st.markdown(f"""
-                <div style='text-align: center; padding: 20px; background-color: #f0f2f6; border-radius: 10px;'>
-                    <div style='font-size: 3rem; margin-bottom: 10px;'>🏋️</div>
-                    <div style='font-size: 2.5rem; font-weight: bold; color: #1f77b4;'>{exercices_count}</div>
-                    <div style='color: #666;'>Exercices</div>
+                <div class='metric-card' style='text-align: center; background: linear-gradient(135deg, #fff3cd 0%, white 100%); border-top: 4px solid #ffc107;'>
+                    <div style='font-size: 3.5rem; margin-bottom: 12px;'>🏋️</div>
+                    <div style='font-size: 2.8rem; font-weight: bold; color: #1f77b4; margin-bottom: 5px;'>{exercices_count}</div>
+                    <div style='color: #666; font-size: 0.95em; font-weight: 500;'>Exercices</div>
                 </div>
             """, unsafe_allow_html=True)
         except:
             st.markdown("""
-                <div style='text-align: center; padding: 20px; background-color: #f0f2f6; border-radius: 10px;'>
-                    <div style='font-size: 3rem; margin-bottom: 10px;'>🏋️</div>
-                    <div style='font-size: 2.5rem; font-weight: bold; color: #1f77b4;'>N/A</div>
-                    <div style='color: #666;'>Exercices</div>
+                <div class='metric-card' style='text-align: center; background: linear-gradient(135deg, #fff3cd 0%, white 100%); border-top: 4px solid #ffc107;'>
+                    <div style='font-size: 3.5rem; margin-bottom: 12px;'>🏋️</div>
+                    <div style='font-size: 2.8rem; font-weight: bold; color: #1f77b4; margin-bottom: 5px;'>N/A</div>
+                    <div style='color: #666; font-size: 0.95em; font-weight: 500;'>Exercices</div>
                 </div>
             """, unsafe_allow_html=True)
     
@@ -185,18 +350,18 @@ if page == "🏠 Accueil":
         try:
             users_count = len(get_data_from_api("/api/v1/utilisateurs?limit=1000"))
             st.markdown(f"""
-                <div style='text-align: center; padding: 20px; background-color: #f0f2f6; border-radius: 10px;'>
-                    <div style='font-size: 3rem; margin-bottom: 10px;'>👥</div>
-                    <div style='font-size: 2.5rem; font-weight: bold; color: #1f77b4;'>{users_count}</div>
-                    <div style='color: #666;'>Utilisateurs</div>
+                <div class='metric-card' style='text-align: center; background: linear-gradient(135deg, #cfe2ff 0%, white 100%); border-top: 4px solid #1f77b4;'>
+                    <div style='font-size: 3.5rem; margin-bottom: 12px;'>👥</div>
+                    <div style='font-size: 2.8rem; font-weight: bold; color: #1f77b4; margin-bottom: 5px;'>{users_count}</div>
+                    <div style='color: #666; font-size: 0.95em; font-weight: 500;'>Utilisateurs</div>
                 </div>
             """, unsafe_allow_html=True)
         except:
             st.markdown("""
-                <div style='text-align: center; padding: 20px; background-color: #f0f2f6; border-radius: 10px;'>
-                    <div style='font-size: 3rem; margin-bottom: 10px;'>👥</div>
-                    <div style='font-size: 2.5rem; font-weight: bold; color: #1f77b4;'>N/A</div>
-                    <div style='color: #666;'>Utilisateurs</div>
+                <div class='metric-card' style='text-align: center; background: linear-gradient(135deg, #cfe2ff 0%, white 100%); border-top: 4px solid #1f77b4;'>
+                    <div style='font-size: 3.5rem; margin-bottom: 12px;'>👥</div>
+                    <div style='font-size: 2.8rem; font-weight: bold; color: #1f77b4; margin-bottom: 5px;'>N/A</div>
+                    <div style='color: #666; font-size: 0.95em; font-weight: 500;'>Utilisateurs</div>
                 </div>
             """, unsafe_allow_html=True)
     
@@ -204,18 +369,18 @@ if page == "🏠 Accueil":
         try:
             aliments_count = len(get_data_from_api("/api/v1/aliments?limit=1000"))
             st.markdown(f"""
-                <div style='text-align: center; padding: 20px; background-color: #f0f2f6; border-radius: 10px;'>
-                    <div style='font-size: 3rem; margin-bottom: 10px;'>🍎</div>
-                    <div style='font-size: 2.5rem; font-weight: bold; color: #1f77b4;'>{aliments_count}</div>
-                    <div style='color: #666;'>Aliments</div>
+                <div class='metric-card' style='text-align: center; background: linear-gradient(135deg, #f8d7da 0%, white 100%); border-top: 4px solid #dc3545;'>
+                    <div style='font-size: 3.5rem; margin-bottom: 12px;'>🍎</div>
+                    <div style='font-size: 2.8rem; font-weight: bold; color: #1f77b4; margin-bottom: 5px;'>{aliments_count}</div>
+                    <div style='color: #666; font-size: 0.95em; font-weight: 500;'>Aliments</div>
                 </div>
             """, unsafe_allow_html=True)
         except:
             st.markdown("""
-                <div style='text-align: center; padding: 20px; background-color: #f0f2f6; border-radius: 10px;'>
-                    <div style='font-size: 3rem; margin-bottom: 10px;'>🍎</div>
-                    <div style='font-size: 2.5rem; font-weight: bold; color: #1f77b4;'>N/A</div>
-                    <div style='color: #666;'>Aliments</div>
+                <div class='metric-card' style='text-align: center; background: linear-gradient(135deg, #f8d7da 0%, white 100%); border-top: 4px solid #dc3545;'>
+                    <div style='font-size: 3.5rem; margin-bottom: 12px;'>🍎</div>
+                    <div style='font-size: 2.8rem; font-weight: bold; color: #1f77b4; margin-bottom: 5px;'>N/A</div>
+                    <div style='color: #666; font-size: 0.95em; font-weight: 500;'>Aliments</div>
                 </div>
             """, unsafe_allow_html=True)
     
@@ -226,38 +391,44 @@ if page == "🏠 Accueil":
     
     with col1:
         st.markdown("""
-            <div style='background-color: #e3f2fd; padding: 20px; border-radius: 10px; border-left: 4px solid #1f77b4;'>
-                <h3 style='color: #1f77b4; margin-top: 0;'>💡 Navigation</h3>
-                <p>Utilisez le menu de gauche pour accéder aux différentes sections :</p>
-                <ul>
-                    <li><strong>Dashboard</strong> : Vue d'ensemble avec graphiques</li>
-                    <li><strong>Exercices</strong> : Gestion des exercices</li>
-                    <li><strong>Utilisateurs</strong> : Gestion des utilisateurs</li>
-                    <li><strong>Aliments</strong> : Base de données nutritionnelle</li>
+            <div class='info-card' style='background: linear-gradient(135deg, #e3f2fd 0%, white 100%); border-left-color: #1f77b4;'>
+                <h3 style='color: #1f77b4; margin-top: 0; margin-bottom: 15px; font-size: 1.3em;'>💡 Navigation</h3>
+                <p style='margin-bottom: 12px; color: #555;'>Utilisez le menu de gauche pour accéder aux différentes sections :</p>
+                <ul style='margin: 0; padding-left: 20px; color: #555;'>
+                    <li style='margin-bottom: 8px;'><strong style='color: #1f77b4;'>Dashboard</strong> : Vue d'ensemble avec graphiques</li>
+                    <li style='margin-bottom: 8px;'><strong style='color: #1f77b4;'>Exercices</strong> : Gestion des exercices</li>
+                    <li style='margin-bottom: 8px;'><strong style='color: #1f77b4;'>Utilisateurs</strong> : Gestion des utilisateurs</li>
+                    <li style='margin-bottom: 8px;'><strong style='color: #1f77b4;'>Aliments</strong> : Base de données nutritionnelle</li>
                 </ul>
             </div>
         """, unsafe_allow_html=True)
     
     with col2:
         st.markdown("""
-            <div style='background-color: #fff3e0; padding: 20px; border-radius: 10px; border-left: 4px solid #ff7f0e;'>
-                <h3 style='color: #ff7f0e; margin-top: 0;'>🚀 Fonctionnalités</h3>
-                <p>Explorez les fonctionnalités disponibles :</p>
-                <ul>
-                    <li>Recherche et filtres avancés</li>
-                    <li>Graphiques interactifs</li>
-                    <li>Statistiques en temps réel</li>
-                    <li>Gestion complète des données</li>
+            <div class='info-card' style='background: linear-gradient(135deg, #fff3e0 0%, white 100%); border-left-color: #ff7f0e;'>
+                <h3 style='color: #ff7f0e; margin-top: 0; margin-bottom: 15px; font-size: 1.3em;'>🚀 Fonctionnalités</h3>
+                <p style='margin-bottom: 12px; color: #555;'>Explorez les fonctionnalités disponibles :</p>
+                <ul style='margin: 0; padding-left: 20px; color: #555;'>
+                    <li style='margin-bottom: 8px;'>Recherche et filtres avancés</li>
+                    <li style='margin-bottom: 8px;'>Graphiques interactifs</li>
+                    <li style='margin-bottom: 8px;'>Statistiques en temps réel</li>
+                    <li style='margin-bottom: 8px;'>Gestion complète des données</li>
                 </ul>
             </div>
         """, unsafe_allow_html=True)
 
 elif page == "📈 Dashboard":
     st.markdown("""
-        <div style='background: linear-gradient(90deg, #1f77b4 0%, #ff7f0e 100%); 
-                    padding: 20px; border-radius: 10px; margin-bottom: 30px;'>
-            <h1 style='color: white; margin: 0;'>📈 Dashboard</h1>
-            <p style='color: white; margin: 10px 0 0 0;'>Vue d'ensemble de vos données</p>
+        <div class='page-header'>
+            <div style='display: flex; align-items: center; gap: 12px;'>
+                <div style='font-size: 2rem;'>📈</div>
+                <div>
+                    <h1 style='color: white; margin: 0; font-size: 2rem; font-weight: bold;'>Dashboard</h1>
+                    <p style='color: rgba(255, 255, 255, 0.9); margin: 8px 0 0 0; font-size: 1rem;'>
+                        Vue d'ensemble de votre plateforme de santé connectée
+                    </p>
+                </div>
+            </div>
         </div>
     """, unsafe_allow_html=True)
     
@@ -284,6 +455,63 @@ elif page == "📈 Dashboard":
                 df_ex = pd.DataFrame(exercices)
                 types_count = df_ex['type'].value_counts().sum() if 'type' in df_ex.columns else 0
                 st.metric("Types d'exercices", types_count)
+        
+        st.markdown("---")
+        
+        # KPIs Business
+        st.markdown("### 💼 KPIs Business")
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            # Taux de conversion Premium
+            if utilisateurs:
+                df_usr = pd.DataFrame(utilisateurs)
+                total_users = len(df_usr)
+                premium_users = len(df_usr[df_usr['type_abonnement'].isin(['premium', 'premium+', 'B2B'])]) if 'type_abonnement' in df_usr.columns else 0
+                conversion_rate = (premium_users / total_users * 100) if total_users > 0 else 0
+                st.metric("📈 Taux Conversion Premium", f"{conversion_rate:.1f}%", delta=f"{premium_users}/{total_users}")
+        
+        with col2:
+            # Répartition par objectif
+            if utilisateurs:
+                df_usr = pd.DataFrame(utilisateurs)
+                if 'objectifs' in df_usr.columns:
+                    # Compter les objectifs (peut être une liste)
+                    all_objectifs = []
+                    for obj in df_usr['objectifs']:
+                        if isinstance(obj, list):
+                            all_objectifs.extend(obj)
+                        elif isinstance(obj, str):
+                            # Essayer de parser si c'est une string représentant une liste
+                            try:
+                                import ast
+                                parsed = ast.literal_eval(obj)
+                                if isinstance(parsed, list):
+                                    all_objectifs.extend(parsed)
+                            except:
+                                all_objectifs.append(obj)
+                    unique_objectifs = len(set(all_objectifs)) if all_objectifs else 0
+                    st.metric("🎯 Objectifs uniques", unique_objectifs)
+                else:
+                    st.metric("🎯 Objectifs uniques", "N/A")
+        
+        with col3:
+            # Engagement (utilisateurs actifs)
+            if utilisateurs:
+                df_usr = pd.DataFrame(utilisateurs)
+                # Simuler l'engagement (utilisateurs avec données)
+                active_users = len(df_usr)  # Simplification
+                st.metric("👥 Utilisateurs actifs", active_users)
+        
+        with col4:
+            # Satisfaction (moyenne basée sur progression)
+            # Simulation : basée sur le nombre d'utilisateurs premium
+            if utilisateurs:
+                df_usr = pd.DataFrame(utilisateurs)
+                premium_count = len(df_usr[df_usr['type_abonnement'].isin(['premium', 'premium+'])]) if 'type_abonnement' in df_usr.columns else 0
+                total = len(df_usr)
+                satisfaction = (premium_count / total * 100) if total > 0 else 0
+                st.metric("⭐ Satisfaction estimée", f"{satisfaction:.0f}%")
         
         st.markdown("---")
         
@@ -338,70 +566,265 @@ elif page == "📈 Dashboard":
 
 elif page == "🏋️ Exercices":
     st.markdown("""
-        <div style='background: linear-gradient(90deg, #1f77b4 0%, #ff7f0e 100%); 
-                    padding: 20px; border-radius: 10px; margin-bottom: 30px;'>
-            <h1 style='color: white; margin: 0;'>🏋️ Gestion des Exercices</h1>
-            <p style='color: white; margin: 10px 0 0 0;'>Explorez et gérez votre base d'exercices</p>
+        <div class='page-header'>
+            <div style='display: flex; align-items: center; gap: 12px;'>
+                <div style='font-size: 2rem;'>🏋️</div>
+                <div>
+                    <h1 style='color: white; margin: 0; font-size: 2rem; font-weight: bold;'>Gestion des Exercices</h1>
+                    <p style='color: rgba(255, 255, 255, 0.9); margin: 8px 0 0 0; font-size: 1rem;'>
+                        Explorez et gérez votre base d'exercices
+                    </p>
+                </div>
+            </div>
         </div>
     """, unsafe_allow_html=True)
     
-    # Filtres avec style
-    st.markdown("### 🔍 Recherche et filtres")
-    col1, col2, col3 = st.columns(3)
+    # Onglets pour CRUD
+    tab1, tab2, tab3 = st.tabs(["📋 Liste", "➕ Créer", "✏️ Modifier/Supprimer"])
     
-    with col1:
-        search_term = st.text_input(
-            "🔍 Rechercher un exercice", 
-            "",
-            placeholder="Ex: pompes, squat, course..."
-        )
-    
-    with col2:
-        filter_type = st.selectbox(
-            "📋 Type d'exercice", 
-            ["Tous", "force", "cardio", "flexibilite", "autre"],
-            help="Filtrez par type d'exercice"
-        )
-    
-    with col3:
-        filter_niveau = st.selectbox(
-            "⭐ Niveau", 
-            ["Tous", "debutant", "intermediaire", "avance"],
-            help="Filtrez par niveau de difficulté"
-        )
-    
-    # Récupérer les exercices
-    try:
-        exercices = get_data_from_api("/api/v1/exercices?limit=1000")
+    with tab1:
+        # Filtres avec style
+        st.markdown("### 🔍 Recherche et filtres")
+        col1, col2, col3 = st.columns(3)
         
-        if exercices:
-            df = pd.DataFrame(exercices)
+        with col1:
+            search_term = st.text_input(
+                "🔍 Rechercher un exercice", 
+                "",
+                placeholder="Ex: pompes, squat, course...",
+                key="search_ex"
+            )
+        
+        with col2:
+            filter_type = st.selectbox(
+                "📋 Type d'exercice", 
+                ["Tous", "force", "cardio", "flexibilite", "autre"],
+                help="Filtrez par type d'exercice",
+                key="filter_type"
+            )
+        
+        with col3:
+            filter_niveau = st.selectbox(
+                "⭐ Niveau", 
+                ["Tous", "debutant", "intermediaire", "avance"],
+                help="Filtrez par niveau de difficulté",
+                key="filter_niveau"
+            )
+        
+        # Récupérer les exercices
+        try:
+            exercices = get_data_from_api("/api/v1/exercices?limit=1000")
             
-            # Appliquer les filtres
-            if search_term:
-                df = df[df['nom'].str.contains(search_term, case=False, na=False)]
+            if exercices:
+                df = pd.DataFrame(exercices)
+                
+                # Appliquer les filtres
+                if search_term:
+                    df = df[df['nom'].str.contains(search_term, case=False, na=False)]
+                
+                if filter_type != "Tous":
+                    df = df[df['type'] == filter_type]
+                
+                if filter_niveau != "Tous":
+                    df = df[df['niveau'] == filter_niveau]
+                
+                # Métrique avec style
+                st.markdown(f"""
+                    <div style='background-color: #e3f2fd; padding: 15px; border-radius: 10px; margin: 20px 0; text-align: center;'>
+                        <span style='font-size: 1.5em; font-weight: bold; color: #1f77b4;'>{len(df)}</span>
+                        <span style='font-size: 1.2em; color: #666; margin-left: 10px;'>exercices trouvés</span>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                # Afficher les exercices
+                if len(df) > 0:
+                    display_cols = ['nom', 'type', 'groupe_musculaire', 'niveau', 'equipement', 'description']
+                    available_cols = [col for col in display_cols if col in df.columns]
+                    
+                    st.dataframe(
+                        df[available_cols],
+                        use_container_width=True,
+                        height=400,
+                        hide_index=True
+                    )
+                else:
+                    st.info("Aucun exercice trouvé avec ces critères")
+            else:
+                st.info("Aucun exercice disponible")
+        
+        except Exception as e:
+            st.error(f"Erreur: {str(e)}")
+    
+    with tab2:
+        st.markdown("### ➕ Créer un nouvel exercice")
+        
+        with st.form("create_exercice", clear_on_submit=True):
+            col1, col2 = st.columns(2)
             
-            if filter_type != "Tous":
-                df = df[df['type'] == filter_type]
+            with col1:
+                nom = st.text_input("Nom de l'exercice *", placeholder="Ex: Pompes")
+                type_ex = st.selectbox("Type *", ["force", "cardio", "flexibilite", "autre"])
+                groupe_musculaire = st.text_input("Groupe musculaire", placeholder="Ex: pectoraux")
+                niveau = st.selectbox("Niveau *", ["debutant", "intermediaire", "avance"])
             
-            if filter_niveau != "Tous":
-                df = df[df['niveau'] == filter_niveau]
+            with col2:
+                equipement = st.text_input("Équipement", placeholder="Ex: aucun, haltères...")
+                description = st.text_area("Description", placeholder="Description de l'exercice...")
+                instructions = st.text_area("Instructions", placeholder="Instructions détaillées...")
+                source = st.text_input("Source", value="Manuel", placeholder="Source des données")
             
-            # Métrique avec style
-            st.markdown(f"""
-                <div style='background-color: #e3f2fd; padding: 15px; border-radius: 10px; margin: 20px 0; text-align: center;'>
-                    <span style='font-size: 1.5em; font-weight: bold; color: #1f77b4;'>{len(df)}</span>
-                    <span style='font-size: 1.2em; color: #666; margin-left: 10px;'>exercices trouvés</span>
+            submitted = st.form_submit_button("✅ Créer l'exercice", use_container_width=True)
+            
+            if submitted:
+                if not nom:
+                    st.error("Le nom est obligatoire")
+                else:
+                    try:
+                        data = {
+                            "nom": nom,
+                            "type": type_ex,
+                            "groupe_musculaire": groupe_musculaire if groupe_musculaire else None,
+                            "niveau": niveau,
+                            "equipement": equipement if equipement else "aucun",
+                            "description": description if description else None,
+                            "instructions": instructions if instructions else None,
+                            "source": source if source else "Manuel"
+                        }
+                        
+                        response = requests.post(
+                            f"{API_URL}/api/v1/exercices",
+                            json=data,
+                            timeout=10
+                        )
+                        response.raise_for_status()
+                        
+                        st.success(f"✅ Exercice '{nom}' créé avec succès !")
+                        st.balloons()
+                    except Exception as e:
+                        st.error(f"❌ Erreur lors de la création: {str(e)}")
+    
+    with tab3:
+        st.markdown("### ✏️ Modifier ou Supprimer un exercice")
+        
+        try:
+            exercices = get_data_from_api("/api/v1/exercices?limit=1000")
+            
+            if exercices and len(exercices) > 0:
+                df = pd.DataFrame(exercices)
+                
+                # Sélectionner un exercice
+                exercice_names = df['nom'].tolist()
+                selected_name = st.selectbox("Sélectionner un exercice", exercice_names)
+                
+                if selected_name:
+                    selected_ex = df[df['nom'] == selected_name].iloc[0]
+                    
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.markdown("#### 📝 Modifier")
+                        with st.form("update_exercice"):
+                            nom_upd = st.text_input("Nom", value=selected_ex.get('nom', ''))
+                            type_upd = st.selectbox("Type", ["force", "cardio", "flexibilite", "autre"], 
+                                                   index=["force", "cardio", "flexibilite", "autre"].index(selected_ex.get('type', 'force')) if selected_ex.get('type') in ["force", "cardio", "flexibilite", "autre"] else 0)
+                            niveau_upd = st.selectbox("Niveau", ["debutant", "intermediaire", "avance"],
+                                                    index=["debutant", "intermediaire", "avance"].index(selected_ex.get('niveau', 'debutant')) if selected_ex.get('niveau') in ["debutant", "intermediaire", "avance"] else 0)
+                            equipement_upd = st.text_input("Équipement", value=selected_ex.get('equipement', ''))
+                            description_upd = st.text_area("Description", value=selected_ex.get('description', ''))
+                            
+                            if st.form_submit_button("💾 Mettre à jour"):
+                                try:
+                                    data = {
+                                        "nom": nom_upd,
+                                        "type": type_upd,
+                                        "niveau": niveau_upd,
+                                        "equipement": equipement_upd,
+                                        "description": description_upd
+                                    }
+                                    
+                                    response = requests.put(
+                                        f"{API_URL}/api/v1/exercices/{selected_ex['id_exercice']}",
+                                        json=data,
+                                        timeout=10
+                                    )
+                                    response.raise_for_status()
+                                    
+                                    st.success("✅ Exercice mis à jour avec succès !")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"❌ Erreur: {str(e)}")
+                    
+                    with col2:
+                        st.markdown("#### 🗑️ Supprimer")
+                        st.warning(f"⚠️ Vous êtes sur le point de supprimer l'exercice '{selected_name}'")
+                        
+                        if st.button("🗑️ Supprimer définitivement", type="primary"):
+                            try:
+                                response = requests.delete(
+                                    f"{API_URL}/api/v1/exercices/{selected_ex['id_exercice']}",
+                                    timeout=10
+                                )
+                                response.raise_for_status()
+                                
+                                st.success("✅ Exercice supprimé avec succès !")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"❌ Erreur: {str(e)}")
+            else:
+                st.info("Aucun exercice disponible")
+        except Exception as e:
+            st.error(f"Erreur: {str(e)}")
+
+elif page == "👥 Utilisateurs":
+    st.markdown("""
+        <div class='page-header'>
+            <div style='display: flex; align-items: center; gap: 12px;'>
+                <div style='font-size: 2rem;'>👥</div>
+                <div>
+                    <h1 style='color: white; margin: 0; font-size: 2rem; font-weight: bold;'>Gestion des Utilisateurs</h1>
+                    <p style='color: rgba(255, 255, 255, 0.9); margin: 8px 0 0 0; font-size: 1rem;'>
+                        Gérez vos utilisateurs et leurs abonnements
+                    </p>
                 </div>
-            """, unsafe_allow_html=True)
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    tab1, tab2, tab3 = st.tabs(["📋 Liste", "➕ Créer", "✏️ Modifier/Supprimer"])
+    
+    with tab1:
+        try:
+            utilisateurs = get_data_from_api("/api/v1/utilisateurs?limit=1000")
             
-            # Afficher les exercices
-            if len(df) > 0:
-                # Sélectionner les colonnes à afficher
-                display_cols = ['nom', 'type', 'groupe_musculaire', 'niveau', 'equipement', 'description']
+            if utilisateurs:
+                df = pd.DataFrame(utilisateurs)
+                st.metric("Total utilisateurs", len(df))
+                st.markdown("---")
+                
+                # Statistiques
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    if 'type_abonnement' in df.columns:
+                        abo_counts = df['type_abonnement'].value_counts()
+                        st.metric("Abonnements Premium", abo_counts.get('premium', 0) + abo_counts.get('premium+', 0))
+                
+                with col2:
+                    if 'sexe' in df.columns:
+                        sexe_counts = df['sexe'].value_counts()
+                        st.metric("Hommes", sexe_counts.get('M', 0))
+                
+                with col3:
+                    if 'sexe' in df.columns:
+                        sexe_counts = df['sexe'].value_counts()
+                        st.metric("Femmes", sexe_counts.get('F', 0))
+                
+                st.markdown("---")
+                
+                # Tableau des utilisateurs
+                display_cols = ['email', 'nom', 'prenom', 'age', 'sexe', 'poids', 'taille', 'type_abonnement']
                 available_cols = [col for col in display_cols if col in df.columns]
                 
-                # Style du dataframe
                 st.dataframe(
                     df[available_cols],
                     use_container_width=True,
@@ -409,154 +832,591 @@ elif page == "🏋️ Exercices":
                     hide_index=True
                 )
             else:
-                st.info("Aucun exercice trouvé avec ces critères")
-        else:
-            st.info("Aucun exercice disponible")
-    
-    except Exception as e:
-        st.error(f"Erreur: {str(e)}")
-
-elif page == "👥 Utilisateurs":
-    st.markdown("""
-        <div style='background: linear-gradient(90deg, #1f77b4 0%, #ff7f0e 100%); 
-                    padding: 20px; border-radius: 10px; margin-bottom: 30px;'>
-            <h1 style='color: white; margin: 0;'>👥 Gestion des Utilisateurs</h1>
-            <p style='color: white; margin: 10px 0 0 0;'>Visualisez et gérez vos utilisateurs</p>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    try:
-        utilisateurs = get_data_from_api("/api/v1/utilisateurs?limit=1000")
+                st.info("Aucun utilisateur disponible")
         
-        if utilisateurs:
-            df = pd.DataFrame(utilisateurs)
-            st.metric("Total utilisateurs", len(df))
-            st.markdown("---")
-            
-            # Statistiques
-            col1, col2, col3 = st.columns(3)
+        except Exception as e:
+            st.error(f"Erreur: {str(e)}")
+    
+    with tab2:
+        st.markdown("### ➕ Créer un nouvel utilisateur")
+        
+        with st.form("create_utilisateur", clear_on_submit=True):
+            col1, col2 = st.columns(2)
             
             with col1:
-                if 'type_abonnement' in df.columns:
-                    abo_counts = df['type_abonnement'].value_counts()
-                    st.metric("Abonnements Premium", abo_counts.get('premium', 0) + abo_counts.get('premium+', 0))
+                email = st.text_input("Email *", placeholder="exemple@email.com")
+                nom = st.text_input("Nom", placeholder="Dupont")
+                prenom = st.text_input("Prénom", placeholder="Jean")
+                age = st.number_input("Âge", min_value=1, max_value=150, value=25)
             
             with col2:
-                if 'sexe' in df.columns:
-                    sexe_counts = df['sexe'].value_counts()
-                    st.metric("Hommes", sexe_counts.get('M', 0))
+                sexe = st.selectbox("Sexe", ["M", "F", "Autre"])
+                poids = st.number_input("Poids (kg)", min_value=0.0, value=70.0, step=0.1)
+                taille = st.number_input("Taille (cm)", min_value=0.0, value=175.0, step=0.1)
+                type_abonnement = st.selectbox("Type d'abonnement", ["freemium", "premium", "premium+", "B2B"])
             
-            with col3:
-                if 'sexe' in df.columns:
-                    sexe_counts = df['sexe'].value_counts()
-                    st.metric("Femmes", sexe_counts.get('F', 0))
+            objectifs = st.multiselect("Objectifs", ["perte de poids", "prise de masse", "forme", "cardio", "musculation", "sommeil"])
             
-            st.markdown("---")
+            submitted = st.form_submit_button("✅ Créer l'utilisateur", use_container_width=True)
             
-            # Tableau des utilisateurs
-            display_cols = ['email', 'nom', 'prenom', 'age', 'sexe', 'poids', 'taille', 'type_abonnement']
-            available_cols = [col for col in display_cols if col in df.columns]
-            
-            st.dataframe(
-                df[available_cols],
-                use_container_width=True,
-                height=400
-            )
-        else:
-            st.info("Aucun utilisateur disponible")
+            if submitted:
+                if not email:
+                    st.error("L'email est obligatoire")
+                else:
+                    try:
+                        data = {
+                            "email": email,
+                            "nom": nom if nom else None,
+                            "prenom": prenom if prenom else None,
+                            "age": age if age else None,
+                            "sexe": sexe,
+                            "poids": poids if poids else None,
+                            "taille": taille if taille else None,
+                            "type_abonnement": type_abonnement,
+                            "objectifs": objectifs if objectifs else []
+                        }
+                        
+                        response = requests.post(
+                            f"{API_URL}/api/v1/utilisateurs",
+                            json=data,
+                            timeout=10
+                        )
+                        response.raise_for_status()
+                        
+                        st.success(f"✅ Utilisateur '{email}' créé avec succès !")
+                        st.balloons()
+                    except Exception as e:
+                        st.error(f"❌ Erreur lors de la création: {str(e)}")
     
-    except Exception as e:
-        st.error(f"Erreur: {str(e)}")
+    with tab3:
+        st.markdown("### ✏️ Modifier ou Supprimer un utilisateur")
+        
+        try:
+            utilisateurs = get_data_from_api("/api/v1/utilisateurs?limit=1000")
+            
+            if utilisateurs and len(utilisateurs) > 0:
+                df = pd.DataFrame(utilisateurs)
+                
+                # Sélectionner un utilisateur
+                user_emails = df['email'].tolist()
+                selected_email = st.selectbox("Sélectionner un utilisateur", user_emails)
+                
+                if selected_email:
+                    selected_user = df[df['email'] == selected_email].iloc[0]
+                    
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.markdown("#### 📝 Modifier")
+                        with st.form("update_utilisateur"):
+                            email_upd = st.text_input("Email", value=selected_user.get('email', ''))
+                            nom_upd = st.text_input("Nom", value=selected_user.get('nom', ''))
+                            prenom_upd = st.text_input("Prénom", value=selected_user.get('prenom', ''))
+                            age_upd = st.number_input("Âge", min_value=1, max_value=150, value=int(selected_user.get('age', 25)))
+                            sexe_upd = st.selectbox("Sexe", ["M", "F", "Autre"], 
+                                                  index=["M", "F", "Autre"].index(selected_user.get('sexe', 'M')) if selected_user.get('sexe') in ["M", "F", "Autre"] else 0)
+                            poids_upd = st.number_input("Poids (kg)", min_value=0.0, value=float(selected_user.get('poids', 70.0)), step=0.1)
+                            taille_upd = st.number_input("Taille (cm)", min_value=0.0, value=float(selected_user.get('taille', 175.0)), step=0.1)
+                            type_abonnement_upd = st.selectbox("Type d'abonnement", ["freemium", "premium", "premium+", "B2B"],
+                                                             index=["freemium", "premium", "premium+", "B2B"].index(selected_user.get('type_abonnement', 'freemium')) if selected_user.get('type_abonnement') in ["freemium", "premium", "premium+", "B2B"] else 0)
+                            
+                            if st.form_submit_button("💾 Mettre à jour"):
+                                try:
+                                    data = {
+                                        "email": email_upd,
+                                        "nom": nom_upd if nom_upd else None,
+                                        "prenom": prenom_upd if prenom_upd else None,
+                                        "age": age_upd,
+                                        "sexe": sexe_upd,
+                                        "poids": poids_upd,
+                                        "taille": taille_upd,
+                                        "type_abonnement": type_abonnement_upd
+                                    }
+                                    
+                                    response = requests.put(
+                                        f"{API_URL}/api/v1/utilisateurs/{selected_user['id_utilisateur']}",
+                                        json=data,
+                                        timeout=10
+                                    )
+                                    response.raise_for_status()
+                                    
+                                    st.success("✅ Utilisateur mis à jour avec succès !")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"❌ Erreur: {str(e)}")
+                    
+                    with col2:
+                        st.markdown("#### 🗑️ Supprimer")
+                        st.warning(f"⚠️ Vous êtes sur le point de supprimer l'utilisateur '{selected_email}'")
+                        
+                        if st.button("🗑️ Supprimer définitivement", type="primary"):
+                            try:
+                                response = requests.delete(
+                                    f"{API_URL}/api/v1/utilisateurs/{selected_user['id_utilisateur']}",
+                                    timeout=10
+                                )
+                                response.raise_for_status()
+                                
+                                st.success("✅ Utilisateur supprimé avec succès !")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"❌ Erreur: {str(e)}")
+            else:
+                st.info("Aucun utilisateur disponible")
+        except Exception as e:
+            st.error(f"Erreur: {str(e)}")
 
 elif page == "🍎 Aliments":
     st.markdown("""
-        <div style='background: linear-gradient(90deg, #1f77b4 0%, #ff7f0e 100%); 
-                    padding: 20px; border-radius: 10px; margin-bottom: 30px;'>
-            <h1 style='color: white; margin: 0;'>🍎 Gestion des Aliments</h1>
-            <p style='color: white; margin: 10px 0 0 0;'>Base de données nutritionnelle</p>
+        <div class='page-header'>
+            <div style='display: flex; align-items: center; gap: 12px;'>
+                <div style='font-size: 2rem;'>🍎</div>
+                <div>
+                    <h1 style='color: white; margin: 0; font-size: 2rem; font-weight: bold;'>Gestion des Aliments</h1>
+                    <p style='color: rgba(255, 255, 255, 0.9); margin: 8px 0 0 0; font-size: 1rem;'>
+                        Base de données nutritionnelle complète
+                    </p>
+                </div>
+            </div>
         </div>
     """, unsafe_allow_html=True)
     
-    try:
-        aliments = get_data_from_api("/api/v1/aliments?limit=1000")
+    tab1, tab2, tab3 = st.tabs(["📋 Liste", "➕ Créer", "✏️ Modifier/Supprimer"])
+    
+    with tab1:
+        try:
+            aliments = get_data_from_api("/api/v1/aliments?limit=1000")
+            
+            if aliments:
+                df = pd.DataFrame(aliments)
+                st.metric("Total aliments", len(df))
+                st.markdown("---")
+                
+                # Recherche
+                search = st.text_input("🔍 Rechercher un aliment", "")
+                if search:
+                    df = df[df['nom'].str.contains(search, case=False, na=False)]
+                
+                # Graphique des calories avec style amélioré
+                if 'calories' in df.columns and len(df) > 0:
+                    st.markdown("### 📊 Analyses nutritionnelles")
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        # Top 10 aliments les plus caloriques
+                        top_cal = df.nlargest(10, 'calories')[['nom', 'calories']]
+                        fig = px.bar(
+                            top_cal,
+                            x='nom',
+                            y='calories',
+                            title="🔥 Top 10 aliments les plus caloriques",
+                            color='calories',
+                            color_continuous_scale='Reds',
+                            labels={'nom': 'Aliment', 'calories': 'Calories (kcal)'}
+                        )
+                        fig.update_xaxes(tickangle=45)
+                        fig.update_layout(font=dict(size=11), showlegend=False)
+                        st.plotly_chart(fig, use_container_width=True)
+                    
+                    with col2:
+                        # Distribution des calories
+                        fig = px.histogram(
+                            df,
+                            x='calories',
+                            title="📈 Distribution des calories",
+                            nbins=30,
+                            color_discrete_sequence=['#1f77b4']
+                        )
+                        fig.update_layout(
+                            font=dict(size=11),
+                            xaxis_title="Calories (kcal)",
+                            yaxis_title="Nombre d'aliments"
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+                
+                st.markdown("---")
+                
+                # Tableau des aliments
+                if len(df) > 0:
+                    display_cols = ['nom', 'calories', 'proteines', 'glucides', 'lipides', 'fibres', 'unite']
+                    available_cols = [col for col in display_cols if col in df.columns]
+                    
+                    st.dataframe(
+                        df[available_cols],
+                        use_container_width=True,
+                        height=400,
+                        hide_index=True
+                    )
+                else:
+                    st.info("Aucun aliment trouvé avec ces critères")
+            else:
+                st.info("Aucun aliment disponible")
         
-        if aliments:
-            df = pd.DataFrame(aliments)
-            st.metric("Total aliments", len(df))
-            st.markdown("---")
+        except Exception as e:
+            st.error(f"Erreur: {str(e)}")
+    
+    with tab2:
+        st.markdown("### ➕ Créer un nouvel aliment")
+        
+        with st.form("create_aliment", clear_on_submit=True):
+            col1, col2 = st.columns(2)
             
-            # Recherche
-            search = st.text_input("🔍 Rechercher un aliment", "")
-            if search:
-                df = df[df['nom'].str.contains(search, case=False, na=False)]
+            with col1:
+                nom = st.text_input("Nom de l'aliment *", placeholder="Ex: Pomme")
+                calories = st.number_input("Calories (kcal) *", min_value=0.0, value=0.0, step=0.1)
+                proteines = st.number_input("Protéines (g)", min_value=0.0, value=0.0, step=0.1)
+                glucides = st.number_input("Glucides (g)", min_value=0.0, value=0.0, step=0.1)
             
-            # Graphique des calories avec style amélioré
-            if 'calories' in df.columns:
-                st.markdown("### 📊 Analyses nutritionnelles")
+            with col2:
+                lipides = st.number_input("Lipides (g)", min_value=0.0, value=0.0, step=0.1)
+                fibres = st.number_input("Fibres (g)", min_value=0.0, value=0.0, step=0.1)
+                unite = st.text_input("Unité", value="100g", placeholder="Ex: 100g, 1 portion...")
+                source = st.text_input("Source", placeholder="Ex: Kaggle, Manuel...")
+            
+            submitted = st.form_submit_button("✅ Créer l'aliment", use_container_width=True)
+            
+            if submitted:
+                if not nom or calories < 0:
+                    st.error("Le nom et les calories sont obligatoires")
+                else:
+                    try:
+                        data = {
+                            "nom": nom,
+                            "calories": calories,
+                            "proteines": proteines,
+                            "glucides": glucides,
+                            "lipides": lipides,
+                            "fibres": fibres,
+                            "unite": unite if unite else "100g",
+                            "source": source if source else None
+                        }
+                        
+                        response = requests.post(
+                            f"{API_URL}/api/v1/aliments",
+                            json=data,
+                            timeout=10
+                        )
+                        response.raise_for_status()
+                        
+                        st.success(f"✅ Aliment '{nom}' créé avec succès !")
+                        st.balloons()
+                    except Exception as e:
+                        st.error(f"❌ Erreur lors de la création: {str(e)}")
+    
+    with tab3:
+        st.markdown("### ✏️ Modifier ou Supprimer un aliment")
+        
+        try:
+            aliments = get_data_from_api("/api/v1/aliments?limit=1000")
+            
+            if aliments and len(aliments) > 0:
+                df = pd.DataFrame(aliments)
+                
+                # Sélectionner un aliment
+                aliment_names = df['nom'].tolist()
+                selected_name = st.selectbox("Sélectionner un aliment", aliment_names)
+                
+                if selected_name:
+                    selected_al = df[df['nom'] == selected_name].iloc[0]
+                    
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.markdown("#### 📝 Modifier")
+                        with st.form("update_aliment"):
+                            nom_upd = st.text_input("Nom", value=selected_al.get('nom', ''))
+                            calories_upd = st.number_input("Calories (kcal)", min_value=0.0, value=float(selected_al.get('calories', 0.0)), step=0.1)
+                            proteines_upd = st.number_input("Protéines (g)", min_value=0.0, value=float(selected_al.get('proteines', 0.0)), step=0.1)
+                            glucides_upd = st.number_input("Glucides (g)", min_value=0.0, value=float(selected_al.get('glucides', 0.0)), step=0.1)
+                            lipides_upd = st.number_input("Lipides (g)", min_value=0.0, value=float(selected_al.get('lipides', 0.0)), step=0.1)
+                            fibres_upd = st.number_input("Fibres (g)", min_value=0.0, value=float(selected_al.get('fibres', 0.0)), step=0.1)
+                            unite_upd = st.text_input("Unité", value=selected_al.get('unite', '100g'))
+                            
+                            if st.form_submit_button("💾 Mettre à jour"):
+                                try:
+                                    data = {
+                                        "nom": nom_upd,
+                                        "calories": calories_upd,
+                                        "proteines": proteines_upd,
+                                        "glucides": glucides_upd,
+                                        "lipides": lipides_upd,
+                                        "fibres": fibres_upd,
+                                        "unite": unite_upd
+                                    }
+                                    
+                                    response = requests.put(
+                                        f"{API_URL}/api/v1/aliments/{selected_al['id_aliment']}",
+                                        json=data,
+                                        timeout=10
+                                    )
+                                    response.raise_for_status()
+                                    
+                                    st.success("✅ Aliment mis à jour avec succès !")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"❌ Erreur: {str(e)}")
+                    
+                    with col2:
+                        st.markdown("#### 🗑️ Supprimer")
+                        st.warning(f"⚠️ Vous êtes sur le point de supprimer l'aliment '{selected_name}'")
+                        
+                        if st.button("🗑️ Supprimer définitivement", type="primary"):
+                            try:
+                                response = requests.delete(
+                                    f"{API_URL}/api/v1/aliments/{selected_al['id_aliment']}",
+                                    timeout=10
+                                )
+                                response.raise_for_status()
+                                
+                                st.success("✅ Aliment supprimé avec succès !")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"❌ Erreur: {str(e)}")
+            else:
+                st.info("Aucun aliment disponible")
+        except Exception as e:
+            st.error(f"Erreur: {str(e)}")
+
+elif page == "⚙️ Configuration":
+    st.markdown("""
+        <div class='page-header'>
+            <div style='display: flex; align-items: center; gap: 12px;'>
+                <div style='font-size: 2rem;'>⚙️</div>
+                <div>
+                    <h1 style='color: white; margin: 0; font-size: 2rem; font-weight: bold;'>Configuration & Outils</h1>
+                    <p style='color: rgba(255, 255, 255, 0.9); margin: 8px 0 0 0; font-size: 1rem;'>
+                        Gestion de la qualité des données et export
+                    </p>
+                </div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # Onglets
+    tab1, tab2, tab3, tab4 = st.tabs(["🔧 Configuration", "🧹 Nettoyage", "📊 Qualité", "💾 Export"])
+    
+    with tab1:
+        st.markdown("### 🔧 Configuration du système")
+        
+        with st.expander("Configuration API"):
+            st.text_input("URL API", value=API_URL, disabled=True, key="api_url")
+            st.text_input("URL Supabase", value=SUPABASE_URL[:50] + "..." if SUPABASE_URL else "", disabled=True, key="supabase_url")
+        
+        with st.expander("Statut des services"):
+            api_status = check_api_health()
+            st.write(f"API: {'🟢 En ligne' if api_status else '🔴 Hors ligne'}")
+            st.write(f"Base de données: 🟢 Connectée")
+        
+        st.markdown("---")
+        st.info("💡 Pour modifier la configuration, éditez le fichier `.env` à la racine du projet")
+    
+    with tab2:
+        st.markdown("### 🧹 Outils de Nettoyage Interactifs")
+        st.markdown("Corrigez manuellement les anomalies détectées dans vos données.")
+        
+        # Sélection de la table
+        table_choice = st.selectbox(
+            "Sélectionner une table à nettoyer",
+            ["exercices", "aliments", "utilisateurs", "journal_alimentaire", "sessions_sport", "mesures_biometriques"]
+        )
+        
+        try:
+            data = get_data_from_api(f"/api/v1/{table_choice}?limit=1000")
+            
+            if data and len(data) > 0:
+                df = pd.DataFrame(data)
+                
+                st.markdown(f"#### 📋 Données de la table `{table_choice}` ({len(df)} enregistrements)")
+                
+                # Afficher les anomalies détectées
+                st.markdown("##### 🔍 Anomalies détectées")
+                
+                anomalies = []
+                
+                # Détecter les doublons
+                if 'nom' in df.columns:
+                    duplicates = df[df.duplicated(subset=['nom'], keep=False)]
+                    if len(duplicates) > 0:
+                        anomalies.append(f"⚠️ {len(duplicates)} doublons détectés (basés sur 'nom')")
+                
+                # Détecter les valeurs manquantes
+                missing = df.isnull().sum()
+                missing_cols = missing[missing > 0]
+                if len(missing_cols) > 0:
+                    anomalies.append(f"⚠️ Valeurs manquantes: {dict(missing_cols)}")
+                
+                # Détecter les valeurs négatives pour les champs numériques
+                numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
+                negative_values = {}
+                for col in numeric_cols:
+                    if col in ['calories', 'proteines', 'glucides', 'lipides', 'poids', 'taille', 'age']:
+                        neg_count = (df[col] < 0).sum()
+                        if neg_count > 0:
+                            negative_values[col] = neg_count
+                if negative_values:
+                    anomalies.append(f"⚠️ Valeurs négatives détectées: {negative_values}")
+                
+                if anomalies:
+                    for anomaly in anomalies:
+                        st.warning(anomaly)
+                else:
+                    st.success("✅ Aucune anomalie détectée")
+                
+                st.markdown("---")
+                
+                # Afficher les données avec possibilité de modification
+                st.markdown("##### ✏️ Modifier les données")
+                
+                # Sélectionner un enregistrement
+                if 'nom' in df.columns:
+                    record_names = df['nom'].tolist()
+                elif 'id' in df.columns:
+                    record_names = [f"ID: {id}" for id in df['id'].tolist()]
+                else:
+                    record_names = [f"Ligne {i+1}" for i in range(len(df))]
+                
+                selected_record = st.selectbox("Sélectionner un enregistrement à modifier", record_names)
+                
+                if selected_record:
+                    if 'nom' in df.columns:
+                        selected_idx = df[df['nom'] == selected_record].index[0]
+                    else:
+                        selected_idx = record_names.index(selected_record)
+                    
+                    record = df.iloc[selected_idx].to_dict()
+                    
+                    st.markdown("**Données actuelles:**")
+                    st.json(record)
+                    
+                    st.info("💡 Pour modifier cet enregistrement, utilisez la page de gestion correspondante (Exercices, Utilisateurs, Aliments)")
+                
+            else:
+                st.info(f"Aucune donnée disponible dans la table `{table_choice}`")
+        
+        except Exception as e:
+            st.error(f"Erreur lors du chargement des données: {str(e)}")
+    
+    with tab3:
+        st.markdown("### 📊 Métriques de Qualité des Données")
+        
+        try:
+            # Récupérer les données de toutes les tables
+            exercices = get_data_from_api("/api/v1/exercices?limit=1000")
+            aliments = get_data_from_api("/api/v1/aliments?limit=1000")
+            utilisateurs = get_data_from_api("/api/v1/utilisateurs?limit=1000")
+            
+            # Calculer les métriques
+            metrics = {}
+            
+            if exercices:
+                df_ex = pd.DataFrame(exercices)
+                metrics['exercices'] = {
+                    'total': len(df_ex),
+                    'doublons': df_ex.duplicated(subset=['nom']).sum() if 'nom' in df_ex.columns else 0,
+                    'valeurs_manquantes': df_ex.isnull().sum().sum(),
+                    'taux_qualite': ((len(df_ex) - df_ex.duplicated(subset=['nom']).sum() - df_ex.isnull().sum().sum()) / len(df_ex) * 100) if len(df_ex) > 0 else 0
+                }
+            
+            if aliments:
+                df_al = pd.DataFrame(aliments)
+                metrics['aliments'] = {
+                    'total': len(df_al),
+                    'doublons': df_al.duplicated(subset=['nom']).sum() if 'nom' in df_al.columns else 0,
+                    'valeurs_manquantes': df_al.isnull().sum().sum(),
+                    'taux_qualite': ((len(df_al) - df_al.duplicated(subset=['nom']).sum() - df_al.isnull().sum().sum()) / len(df_al) * 100) if len(df_al) > 0 else 0
+                }
+            
+            if utilisateurs:
+                df_usr = pd.DataFrame(utilisateurs)
+                metrics['utilisateurs'] = {
+                    'total': len(df_usr),
+                    'doublons': df_usr.duplicated(subset=['email']).sum() if 'email' in df_usr.columns else 0,
+                    'valeurs_manquantes': df_usr.isnull().sum().sum(),
+                    'taux_qualite': ((len(df_usr) - df_usr.duplicated(subset=['email']).sum() - df_usr.isnull().sum().sum()) / len(df_usr) * 100) if len(df_usr) > 0 else 0
+                }
+            
+            # Afficher les métriques
+            for table, data in metrics.items():
+                st.markdown(f"#### 📊 {table.capitalize()}")
+                col1, col2, col3, col4 = st.columns(4)
+                
+                with col1:
+                    st.metric("Total", data['total'])
+                
+                with col2:
+                    st.metric("Doublons", data['doublons'], delta="à corriger" if data['doublons'] > 0 else None)
+                
+                with col3:
+                    st.metric("Valeurs manquantes", data['valeurs_manquantes'], delta="à compléter" if data['valeurs_manquantes'] > 0 else None)
+                
+                with col4:
+                    st.metric("Taux de qualité", f"{data['taux_qualite']:.1f}%", 
+                             delta="✅ Excellent" if data['taux_qualite'] >= 95 else "⚠️ À améliorer" if data['taux_qualite'] >= 80 else "❌ Critique")
+                
+                st.markdown("---")
+        
+        except Exception as e:
+            st.error(f"Erreur lors du calcul des métriques: {str(e)}")
+    
+    with tab4:
+        st.markdown("### 💾 Export des Données Nettoyées")
+        st.markdown("Exportez vos données dans différents formats pour analyse ou sauvegarde.")
+        
+        # Sélection de la table
+        export_table = st.selectbox(
+            "Sélectionner une table à exporter",
+            ["exercices", "aliments", "utilisateurs", "journal_alimentaire", "sessions_sport", "mesures_biometriques"]
+        )
+        
+        # Format d'export
+        export_format = st.radio(
+            "Format d'export",
+            ["CSV", "JSON"],
+            horizontal=True
+        )
+        
+        try:
+            data = get_data_from_api(f"/api/v1/{export_table}?limit=10000")
+            
+            if data and len(data) > 0:
+                df = pd.DataFrame(data)
+                
+                st.markdown(f"#### 📋 Données à exporter: `{export_table}`")
+                st.info(f"📊 {len(df)} enregistrements disponibles")
+                
+                # Aperçu
+                st.markdown("##### 👁️ Aperçu des données")
+                st.dataframe(df.head(10), use_container_width=True)
+                
+                # Boutons d'export
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    # Top 10 aliments les plus caloriques
-                    top_cal = df.nlargest(10, 'calories')[['nom', 'calories']]
-                    fig = px.bar(
-                        top_cal,
-                        x='nom',
-                        y='calories',
-                        title="🔥 Top 10 aliments les plus caloriques",
-                        color='calories',
-                        color_continuous_scale='Reds',
-                        labels={'nom': 'Aliment', 'calories': 'Calories (kcal)'}
-                    )
-                    fig.update_xaxes(tickangle=45)
-                    fig.update_layout(font=dict(size=11), showlegend=False)
-                    st.plotly_chart(fig, use_container_width=True)
+                    if export_format == "CSV":
+                        csv = df.to_csv(index=False).encode('utf-8')
+                        st.download_button(
+                            label="📥 Télécharger en CSV",
+                            data=csv,
+                            file_name=f"{export_table}_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                            mime="text/csv",
+                            use_container_width=True
+                        )
+                    else:
+                        json_str = df.to_json(orient='records', indent=2)
+                        st.download_button(
+                            label="📥 Télécharger en JSON",
+                            data=json_str,
+                            file_name=f"{export_table}_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.json",
+                            mime="application/json",
+                            use_container_width=True
+                        )
                 
                 with col2:
-                    # Distribution des calories
-                    fig = px.histogram(
-                        df,
-                        x='calories',
-                        title="📈 Distribution des calories",
-                        nbins=30,
-                        color_discrete_sequence=['#1f77b4']
-                    )
-                    fig.update_layout(
-                        font=dict(size=11),
-                        xaxis_title="Calories (kcal)",
-                        yaxis_title="Nombre d'aliments"
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
-            
-            st.markdown("---")
-            
-            # Tableau des aliments
-            display_cols = ['nom', 'calories', 'proteines', 'glucides', 'lipides', 'fibres', 'unite']
-            available_cols = [col for col in display_cols if col in df.columns]
-            
-            st.dataframe(
-                df[available_cols],
-                use_container_width=True,
-                height=400
-            )
-        else:
-            st.info("Aucun aliment disponible")
-    
-    except Exception as e:
-        st.error(f"Erreur: {str(e)}")
-
-elif page == "⚙️ Configuration":
-    st.title("⚙️ Configuration")
-    st.markdown("---")
-    
-    with st.expander("Configuration API"):
-        st.text_input("URL API", value=API_URL, disabled=True)
-        st.text_input("URL Supabase", value=SUPABASE_URL[:50] + "..." if SUPABASE_URL else "", disabled=True)
-    
-    with st.expander("Statut des services"):
-        api_status = check_api_health()
-        st.write(f"API: {'🟢 En ligne' if api_status else '🔴 Hors ligne'}")
-        st.write(f"Base de données: 🟢 Connectée")
-    
-    st.markdown("---")
-    st.info("💡 Pour modifier la configuration, éditez le fichier `.env` à la racine du projet")
+                    st.info("💡 Les données exportées sont les données actuellement stockées dans la base de données.")
+                
+            else:
+                st.info(f"Aucune donnée disponible dans la table `{export_table}`")
+        
+        except Exception as e:
+            st.error(f"Erreur lors de l'export: {str(e)}")
 

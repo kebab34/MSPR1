@@ -112,3 +112,4 @@ async def delete_journal_entry(journal_id: UUID):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression: {str(e)}")
 
+

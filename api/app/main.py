@@ -42,3 +42,4 @@ async def health_check():
     """Vérification de santé de l'API"""
     return {"status": "healthy"}
 
+

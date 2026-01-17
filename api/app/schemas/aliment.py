@@ -46,3 +46,4 @@ class AlimentRead(AlimentBase):
     class Config:
         from_attributes = True
 
+

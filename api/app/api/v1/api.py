@@ -16,3 +16,4 @@ api_router.include_router(journal.router, prefix="/journal", tags=["journal"])
 api_router.include_router(sessions.router, prefix="/sessions", tags=["sessions"])
 api_router.include_router(mesures.router, prefix="/mesures", tags=["mesures"])
 
+

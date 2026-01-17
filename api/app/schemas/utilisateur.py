@@ -47,3 +47,4 @@ class UtilisateurRead(UtilisateurBase):
     class Config:
         from_attributes = True
 
+
