@@ -1,2 +1,1 @@
-# Pages module
-
+# Pages package

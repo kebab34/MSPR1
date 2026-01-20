@@ -1,70 +1,41 @@
-"""
-API Client utilities for Streamlit
-"""
 import requests
 import os
-from typing import Optional, Dict, Any
-
+from typing import Optional
 
 class APIClient:
-    """Client for FastAPI"""
-    
+    """Client pour communiquer avec l'API FastAPI."""
+
     def __init__(self):
         self.base_url = os.getenv("API_URL", "http://api:8000")
-        self.timeout = 10
-    
-    def get(self, endpoint: str, params: Optional[Dict] = None) -> Dict[str, Any]:
-        """GET request"""
-        try:
-            response = requests.get(
-                f"{self.base_url}{endpoint}",
-                params=params,
-                timeout=self.timeout
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"API Error: {str(e)}")
-    
-    def post(self, endpoint: str, data: Dict[str, Any]) -> Dict[str, Any]:
-        """POST request"""
-        try:
-            response = requests.post(
-                f"{self.base_url}{endpoint}",
-                json=data,
-                timeout=self.timeout
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"API Error: {str(e)}")
-    
-    def put(self, endpoint: str, data: Dict[str, Any]) -> Dict[str, Any]:
-        """PUT request"""
-        try:
-            response = requests.put(
-                f"{self.base_url}{endpoint}",
-                json=data,
-                timeout=self.timeout
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"API Error: {str(e)}")
-    
-    def delete(self, endpoint: str) -> Dict[str, Any]:
-        """DELETE request"""
-        try:
-            response = requests.delete(
-                f"{self.base_url}{endpoint}",
-                timeout=self.timeout
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"API Error: {str(e)}")
+        self.api_prefix = "/api/v1"
+
+    def _url(self, endpoint: str) -> str:
+        """Construit l'URL complète."""
+        return f"{self.base_url}{self.api_prefix}{endpoint}"
+
+    def get(self, endpoint: str, params: Optional[dict] = None) -> list | dict:
+        """Requête GET."""
+        response = requests.get(self._url(endpoint), params=params, timeout=10)
+        response.raise_for_status()
+        return response.json()
+
+    def post(self, endpoint: str, data: dict) -> dict:
+        """Requête POST."""
+        response = requests.post(self._url(endpoint), json=data, timeout=10)
+        response.raise_for_status()
+        return response.json()
+
+    def put(self, endpoint: str, data: dict) -> dict:
+        """Requête PUT."""
+        response = requests.put(self._url(endpoint), json=data, timeout=10)
+        response.raise_for_status()
+        return response.json()
+
+    def delete(self, endpoint: str) -> dict:
+        """Requête DELETE."""
+        response = requests.delete(self._url(endpoint), timeout=10)
+        response.raise_for_status()
+        return response.json()
 
 
-# Global instance
 api_client = APIClient()
-
