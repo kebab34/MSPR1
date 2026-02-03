@@ -6,7 +6,9 @@ class APIClient:
     """Client pour communiquer avec l'API FastAPI."""
 
     def __init__(self):
-        self.base_url = os.getenv("API_URL", "http://api:8000")
+        # Utiliser localhost par défaut (pour lancement direct)
+        # Pour Docker, définir API_URL=http://api:8000 dans .env
+        self.base_url = os.getenv("API_URL", "http://localhost:8000")
         self.api_prefix = "/api/v1"
 
     def _url(self, endpoint: str) -> str:
