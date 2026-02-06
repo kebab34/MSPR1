@@ -49,3 +49,4 @@ echo "3. Accédez à l'API: http://localhost:8000/docs"
 echo "4. Accédez à Streamlit: http://localhost:8501"
 echo ""
 
+  
