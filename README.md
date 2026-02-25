@@ -248,14 +248,6 @@ Utilisez l'interface Supabase ou des migrations SQL pour gérer le schéma de ba
 
 ## 👥 Contribution
 
-Ce projet est développé dans le cadre du MSPR TPRE501.
-
-## 📄 Licence
-
-[À définir selon les besoins du projet]
-
----
-
-**Bon développement ! 🚀**
+Ce projet est développé dans le cadre d'un projet EPSI
 
 
