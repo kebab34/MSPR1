@@ -10,6 +10,23 @@ from typing import Dict, List, Optional
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+_PRENOMS_M = ["Thomas", "Nicolas", "Julien", "Alexandre", "Pierre", "Antoine", "Maxime", "Romain", "Lucas", "Hugo",
+              "Mathieu", "Quentin", "Clément", "Adrien", "Baptiste", "Florian", "Guillaume", "Kevin", "Yann", "Sébastien"]
+_PRENOMS_F = ["Marie", "Sophie", "Julie", "Camille", "Laura", "Lucie", "Emma", "Léa", "Manon", "Chloé",
+              "Pauline", "Élodie", "Clara", "Inès", "Charlotte", "Alice", "Sarah", "Anaïs", "Océane", "Marion"]
+_NOMS = ["Martin", "Bernard", "Thomas", "Petit", "Robert", "Richard", "Durand", "Dubois", "Moreau", "Laurent",
+         "Simon", "Michel", "Lefebvre", "Leroy", "Roux", "David", "Bertrand", "Morel", "Fournier", "Girard"]
+
+
+def _get_prenom(sexe: str, index: int) -> str:
+    if sexe == "F":
+        return _PRENOMS_F[index % len(_PRENOMS_F)]
+    return _PRENOMS_M[index % len(_PRENOMS_M)]
+
+
+def _get_nom(index: int) -> str:
+    return _NOMS[index % len(_NOMS)]
+
 
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -283,6 +300,8 @@ def transform_gym_members_to_utilisateurs(df: pd.DataFrame) -> pd.DataFrame:
         result['email'] = [f"gym.member.{i:04d}@healthai.com" for i in range(len(df))]
         result['age'] = pd.to_numeric(df['Age'], errors='coerce').astype('Int64')
         result['sexe'] = df['Gender'].map({'Male': 'M', 'Female': 'F'}).fillna('Autre')
+        result['prenom'] = [_get_prenom(s, i) for i, s in enumerate(result['sexe'])]
+        result['nom'] = [_get_nom(i) for i in range(len(df))]
         result['poids'] = pd.to_numeric(df['Weight (kg)'], errors='coerce').round(2)
         # Hauteur en mètres → cm
         result['taille'] = (pd.to_numeric(df['Height (m)'], errors='coerce') * 100).round(2)
@@ -338,6 +357,8 @@ def transform_diet_reco_to_utilisateurs(df: pd.DataFrame) -> pd.DataFrame:
         )
         result['age'] = pd.to_numeric(df['Age'], errors='coerce').astype('Int64')
         result['sexe'] = df['Gender'].map({'Male': 'M', 'Female': 'F'}).fillna('Autre')
+        result['prenom'] = [_get_prenom(s, i) for i, s in enumerate(result['sexe'])]
+        result['nom'] = [_get_nom(i) for i in range(len(df))]
         result['poids'] = pd.to_numeric(df['Weight_kg'], errors='coerce').round(2)
         result['taille'] = pd.to_numeric(df['Height_cm'], errors='coerce').round(2)
         result['type_abonnement'] = df['Severity'].map({

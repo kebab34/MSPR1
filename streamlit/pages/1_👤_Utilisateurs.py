@@ -20,11 +20,14 @@ with tab_liste:
 
             # Détails d'un utilisateur
             st.markdown("### Détails utilisateur")
-            prenom = df["prenom"].tolist()
-            prenom_selectionne = st.selectbox("Sélectionner un utilisateur", prenom)
+            def label_user(row):
+                full = f"{row.get('prenom') or ''} {row.get('nom') or ''}".strip()
+                return full if full else row.get("email", str(row.get("id_utilisateur", "")))
+            labels = df.apply(label_user, axis=1).tolist()
+            label_selectionne = st.selectbox("Sélectionner un utilisateur", labels)
 
-            if prenom_selectionne:
-                user = df[df["prenom"] == prenom_selectionne].iloc[0]
+            if label_selectionne:
+                user = df.iloc[labels.index(label_selectionne)]
                 col1, col2, col3 = st.columns(3)
                 with col1:
                     st.metric("Poids", f"{user.get('poids', 'N/A')} kg")

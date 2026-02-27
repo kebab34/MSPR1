@@ -87,14 +87,14 @@ class SupabaseLoader:
                 try:
                     # Supabase upsert utilise la clé primaire ou une colonne unique
                     # On utilise insert avec ignore_duplicates ou on fait un upsert manuel
-                    response = self.client.table(table_name).upsert(batch).execute()
+                    response = self.client.table(table_name).upsert(batch, on_conflict=on_conflict).execute()
                     logger.info(f"Upserted batch {i//batch_size + 1}/{total_batches} into {table_name} ({len(batch)} records)")
                 except Exception as batch_error:
                     logger.warning(f"Error in batch {i//batch_size + 1}: {str(batch_error)}")
                     # Essayer d'insérer un par un en cas d'erreur
                     for record in batch:
                         try:
-                            self.client.table(table_name).upsert([record]).execute()
+                            self.client.table(table_name).upsert([record], on_conflict=on_conflict).execute()
                         except:
                             pass  # Ignorer les doublons
             

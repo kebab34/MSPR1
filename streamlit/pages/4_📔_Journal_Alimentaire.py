@@ -22,7 +22,11 @@ if not utilisateurs:
 
 # Sélection de l'utilisateur
 df_users = pd.DataFrame(utilisateurs)
-user_options = {f"{u['prenom']} {u['nom']}": u["id_utilisateur"] for u in utilisateurs}
+def label_user(u):
+    full = f"{u.get('prenom') or ''} {u.get('nom') or ''}".strip()
+    return full if full else u.get("email", u["id_utilisateur"])
+
+user_options = {label_user(u): u["id_utilisateur"] for u in utilisateurs}
 user_selected = st.selectbox("Sélectionner un utilisateur", list(user_options.keys()))
 user_id = user_options[user_selected]
 

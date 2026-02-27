@@ -27,11 +27,11 @@ async def get_journal_entries(
         if utilisateur_id:
             query = query.eq("id_utilisateur", str(utilisateur_id))
         if date_debut:
-            query = query.gte("date", str(date_debut))
+            query = query.gte("date_consommation", str(date_debut))
         if date_fin:
-            query = query.lte("date", str(date_fin))
-        
-        result = query.range(skip, skip + limit - 1).order("date", desc=True).execute()
+            query = query.lte("date_consommation", str(date_fin))
+
+        result = query.range(skip, skip + limit - 1).order("date_consommation", desc=True).execute()
         return result.data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération: {str(e)}")
@@ -57,12 +57,6 @@ async def get_journal_entry(journal_id: UUID):
 async def create_journal_entry(entry: JournalAlimentaireCreate):
     """Créer une nouvelle entrée dans le journal alimentaire"""
     try:
-        # Vérifier qu'on a soit un aliment soit une recette
-        if not entry.id_aliment and not entry.id_recette:
-            raise HTTPException(status_code=400, detail="Il faut spécifier soit un aliment soit une recette")
-        if entry.id_aliment and entry.id_recette:
-            raise HTTPException(status_code=400, detail="Il faut spécifier soit un aliment soit une recette, pas les deux")
-        
         data = entry.model_dump()
         result = supabase_admin.table("journal_alimentaire").insert(data).execute()
         

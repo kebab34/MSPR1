@@ -27,11 +27,11 @@ async def get_sessions(
         if utilisateur_id:
             query = query.eq("id_utilisateur", str(utilisateur_id))
         if date_debut:
-            query = query.gte("date", str(date_debut))
+            query = query.gte("date_session", str(date_debut))
         if date_fin:
-            query = query.lte("date", str(date_fin))
-        
-        result = query.range(skip, skip + limit - 1).order("date", desc=True).execute()
+            query = query.lte("date_session", str(date_fin))
+
+        result = query.range(skip, skip + limit - 1).order("date_session", desc=True).execute()
         return result.data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération: {str(e)}")
