@@ -2,6 +2,7 @@
 ETL - Transform Module
 Transform and clean data
 """
+import ast
 import pandas as pd
 import logging
 from typing import Dict, List, Optional
@@ -224,6 +225,136 @@ def transform_exercises_from_exercisedb(df: pd.DataFrame) -> pd.DataFrame:
         
     except Exception as e:
         logger.error(f"Error transforming exercises: {str(e)}")
+        raise
+
+
+def restore_list_columns(df: pd.DataFrame, list_columns: List[str]) -> pd.DataFrame:
+    """
+    Restaure les colonnes contenant des listes qui ont été converties en strings
+    par clean_data (nécessaire pour les colonnes PostgreSQL de type TEXT[]).
+    """
+    for col in list_columns:
+        if col in df.columns:
+            df[col] = df[col].apply(
+                lambda x: ast.literal_eval(x)
+                if isinstance(x, str) and x.startswith('[')
+                else x
+            )
+    return df
+
+
+def transform_nutrition_dataset(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Transform 'Daily Food & Nutrition Dataset' (Kaggle) to aliments schema.
+    Colonnes source : Food_Item, Category, Calories (kcal), Protein (g),
+                      Carbohydrates (g), Fat (g), Fiber (g), Sugars (g),
+                      Sodium (mg), Cholesterol (mg), Meal_Type, Water_Intake (ml)
+    """
+    try:
+        result = pd.DataFrame()
+        result['nom'] = df['Food_Item'].astype(str).str.strip()
+        result['calories'] = pd.to_numeric(df['Calories (kcal)'], errors='coerce').fillna(0.0)
+        result['proteines'] = pd.to_numeric(df['Protein (g)'], errors='coerce').fillna(0.0)
+        result['glucides'] = pd.to_numeric(df['Carbohydrates (g)'], errors='coerce').fillna(0.0)
+        result['lipides'] = pd.to_numeric(df['Fat (g)'], errors='coerce').fillna(0.0)
+        result['fibres'] = pd.to_numeric(df['Fiber (g)'], errors='coerce').fillna(0.0)
+        result['unite'] = '100g'
+        result['source'] = 'Kaggle - Daily Food & Nutrition Dataset'
+        result = result.dropna(subset=['nom'])
+        result = result[result['nom'] != '']
+        result = result.where(pd.notna(result), None)
+        logger.info(f"Transformed {len(result)} foods from nutrition dataset")
+        return result
+    except Exception as e:
+        logger.error(f"Error transforming nutrition dataset: {str(e)}")
+        raise
+
+
+def transform_gym_members_to_utilisateurs(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Transform 'Gym Members Exercise Dataset' (Kaggle) to utilisateurs schema.
+    Colonnes source : Age, Gender, Weight (kg), Height (m), Max_BPM, Avg_BPM,
+                      Resting_BPM, Session_Duration (hours), Calories_Burned,
+                      Workout_Type, Fat_Percentage, BMI, Experience_Level
+    """
+    try:
+        result = pd.DataFrame()
+        # Générer des emails uniques reproductibles (évite les doublons lors d'upsert)
+        result['email'] = [f"gym.member.{i:04d}@healthai.com" for i in range(len(df))]
+        result['age'] = pd.to_numeric(df['Age'], errors='coerce').astype('Int64')
+        result['sexe'] = df['Gender'].map({'Male': 'M', 'Female': 'F'}).fillna('Autre')
+        result['poids'] = pd.to_numeric(df['Weight (kg)'], errors='coerce').round(2)
+        # Hauteur en mètres → cm
+        result['taille'] = (pd.to_numeric(df['Height (m)'], errors='coerce') * 100).round(2)
+        result['type_abonnement'] = df['Experience_Level'].map({
+            1: 'freemium',
+            2: 'freemium',
+            3: 'premium',
+        }).fillna('freemium')
+        result['objectifs'] = df['Workout_Type'].apply(
+            lambda x: [f"Entraînement: {x}"] if pd.notna(x) else ['fitness']
+        )
+        result = result.where(pd.notna(result), None)
+        logger.info(f"Transformed {len(result)} utilisateurs from gym members dataset")
+        return result
+    except Exception as e:
+        logger.error(f"Error transforming gym members to utilisateurs: {str(e)}")
+        raise
+
+
+def transform_gym_members_to_mesures(df: pd.DataFrame, email_to_id: dict) -> pd.DataFrame:
+    """
+    Transform 'Gym Members Exercise Dataset' to mesures_biometriques schema.
+    Requires email_to_id dict {email: uuid} to link mesures to utilisateurs.
+    """
+    try:
+        result = pd.DataFrame()
+        emails = [f"gym.member.{i:04d}@healthai.com" for i in range(len(df))]
+        result['id_utilisateur'] = [email_to_id.get(e) for e in emails]
+        result['poids'] = pd.to_numeric(df['Weight (kg)'], errors='coerce').round(2)
+        result['frequence_cardiaque'] = pd.to_numeric(df['Avg_BPM'], errors='coerce').astype('Int64')
+        result['calories_brulees'] = pd.to_numeric(df['Calories_Burned'], errors='coerce').round(2)
+        result['sommeil'] = None  # non disponible dans ce dataset
+        # Supprimer les lignes sans utilisateur lié
+        result = result.dropna(subset=['id_utilisateur'])
+        result = result.where(pd.notna(result), None)
+        logger.info(f"Transformed {len(result)} mesures from gym members dataset")
+        return result
+    except Exception as e:
+        logger.error(f"Error transforming gym members to mesures: {str(e)}")
+        raise
+
+
+def transform_diet_reco_to_utilisateurs(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Transform 'Diet Recommendations Dataset' (Kaggle) to utilisateurs schema.
+    Colonnes source : Patient_ID, Age, Gender, Weight_kg, Height_cm, BMI,
+                      Disease_Type, Severity, Diet_Recommendation, ...
+    """
+    try:
+        result = pd.DataFrame()
+        result['email'] = df['Patient_ID'].astype(str).str.lower().apply(
+            lambda x: f"{x}@healthai.com"
+        )
+        result['age'] = pd.to_numeric(df['Age'], errors='coerce').astype('Int64')
+        result['sexe'] = df['Gender'].map({'Male': 'M', 'Female': 'F'}).fillna('Autre')
+        result['poids'] = pd.to_numeric(df['Weight_kg'], errors='coerce').round(2)
+        result['taille'] = pd.to_numeric(df['Height_cm'], errors='coerce').round(2)
+        result['type_abonnement'] = df['Severity'].map({
+            'Mild': 'freemium',
+            'Moderate': 'premium',
+            'Severe': 'premium+',
+        }).fillna('freemium')
+        result['objectifs'] = df.apply(
+            lambda row: [str(row['Diet_Recommendation'])] if pd.notna(row.get('Diet_Recommendation')) else ['santé'],
+            axis=1
+        )
+        result = result.dropna(subset=['email'])
+        result = result.where(pd.notna(result), None)
+        logger.info(f"Transformed {len(result)} utilisateurs from diet recommendations dataset")
+        return result
+    except Exception as e:
+        logger.error(f"Error transforming diet recommendations to utilisateurs: {str(e)}")
         raise
 
 

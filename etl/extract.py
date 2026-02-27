@@ -22,7 +22,7 @@ def extract_from_csv(file_path: str) -> pd.DataFrame:
         DataFrame with extracted data
     """
     try:
-        df = pd.read_csv(file_path)
+        df = pd.read_csv(file_path, on_bad_lines='skip')
         logger.info(f"Extracted {len(df)} rows from {file_path}")
         return df
     except Exception as e:

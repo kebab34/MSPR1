@@ -73,7 +73,7 @@ CREATE TRIGGER update_objectifs_updated_at
 -- ============================================
 CREATE TABLE IF NOT EXISTS aliments (
     id_aliment UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    nom TEXT NOT NULL,
+    nom TEXT NOT NULL UNIQUE,
     calories DECIMAL(10,2) DEFAULT 0 CHECK (calories >= 0),
     proteines DECIMAL(10,2) DEFAULT 0 CHECK (proteines >= 0),
     glucides DECIMAL(10,2) DEFAULT 0 CHECK (glucides >= 0),
@@ -154,13 +154,14 @@ CREATE TRIGGER update_journal_updated_at
 -- ============================================
 CREATE TABLE IF NOT EXISTS exercices (
     id_exercice UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    nom TEXT NOT NULL,
+    nom TEXT NOT NULL UNIQUE,
     type TEXT CHECK (type IN ('force', 'cardio', 'flexibilite', 'autre')),
     groupe_musculaire TEXT,
     niveau TEXT DEFAULT 'debutant' CHECK (niveau IN ('debutant', 'intermediaire', 'avance')),
     equipement TEXT,
     description TEXT,
     instructions TEXT,
+    source TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
