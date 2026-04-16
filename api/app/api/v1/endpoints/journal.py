@@ -2,12 +2,13 @@
 Endpoints pour la gestion du journal alimentaire
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List, Optional
 from uuid import UUID
 from datetime import date
 from app.core.database import supabase_admin
 from app.schemas.journal import JournalAlimentaireCreate, JournalAlimentaireUpdate, JournalAlimentaireRead
+from app.api.v1.deps import get_current_user
 
 router = APIRouter()
 
@@ -54,7 +55,7 @@ async def get_journal_entry(journal_id: UUID):
 
 
 @router.post("", response_model=JournalAlimentaireRead, status_code=201)
-async def create_journal_entry(entry: JournalAlimentaireCreate):
+async def create_journal_entry(entry: JournalAlimentaireCreate, _: dict = Depends(get_current_user)):
     """Créer une nouvelle entrée dans le journal alimentaire"""
     try:
         data = entry.model_dump()
@@ -71,7 +72,7 @@ async def create_journal_entry(entry: JournalAlimentaireCreate):
 
 
 @router.put("/{journal_id}", response_model=JournalAlimentaireRead)
-async def update_journal_entry(journal_id: UUID, entry: JournalAlimentaireUpdate):
+async def update_journal_entry(journal_id: UUID, entry: JournalAlimentaireUpdate, _: dict = Depends(get_current_user)):
     """Mettre à jour une entrée du journal"""
     try:
         data = entry.model_dump(exclude_unset=True)
@@ -92,7 +93,7 @@ async def update_journal_entry(journal_id: UUID, entry: JournalAlimentaireUpdate
 
 
 @router.delete("/{journal_id}", status_code=204)
-async def delete_journal_entry(journal_id: UUID):
+async def delete_journal_entry(journal_id: UUID, _: dict = Depends(get_current_user)):
     """Supprimer une entrée du journal"""
     try:
         result = supabase_admin.table("journal_alimentaire").delete().eq("id_journal", str(journal_id)).execute()

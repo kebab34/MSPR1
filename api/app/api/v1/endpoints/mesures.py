@@ -2,12 +2,13 @@
 Endpoints pour la gestion des mesures biométriques
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List, Optional
 from uuid import UUID
 from datetime import date
 from app.core.database import supabase_admin
 from app.schemas.mesure import MesureBiometriqueCreate, MesureBiometriqueUpdate, MesureBiometriqueRead
+from app.api.v1.deps import get_current_user
 
 router = APIRouter()
 
@@ -54,7 +55,7 @@ async def get_mesure(mesure_id: UUID):
 
 
 @router.post("", response_model=MesureBiometriqueRead, status_code=201)
-async def create_mesure(mesure: MesureBiometriqueCreate):
+async def create_mesure(mesure: MesureBiometriqueCreate, _: dict = Depends(get_current_user)):
     """Créer une nouvelle mesure biométrique"""
     try:
         data = mesure.model_dump()
@@ -69,7 +70,7 @@ async def create_mesure(mesure: MesureBiometriqueCreate):
 
 
 @router.put("/{mesure_id}", response_model=MesureBiometriqueRead)
-async def update_mesure(mesure_id: UUID, mesure: MesureBiometriqueUpdate):
+async def update_mesure(mesure_id: UUID, mesure: MesureBiometriqueUpdate, _: dict = Depends(get_current_user)):
     """Mettre à jour une mesure biométrique"""
     try:
         data = mesure.model_dump(exclude_unset=True)
@@ -90,7 +91,7 @@ async def update_mesure(mesure_id: UUID, mesure: MesureBiometriqueUpdate):
 
 
 @router.delete("/{mesure_id}", status_code=204)
-async def delete_mesure(mesure_id: UUID):
+async def delete_mesure(mesure_id: UUID, _: dict = Depends(get_current_user)):
     """Supprimer une mesure biométrique"""
     try:
         result = supabase_admin.table("mesures_biometriques").delete().eq("id_mesure", str(mesure_id)).execute()

@@ -2,12 +2,13 @@
 Endpoints pour la gestion des sessions sport
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List, Optional
 from uuid import UUID
 from datetime import date
 from app.core.database import supabase_admin
 from app.schemas.session import SessionSportCreate, SessionSportUpdate, SessionSportRead
+from app.api.v1.deps import get_current_user
 
 router = APIRouter()
 
@@ -54,7 +55,7 @@ async def get_session(session_id: UUID):
 
 
 @router.post("", response_model=SessionSportRead, status_code=201)
-async def create_session(session: SessionSportCreate):
+async def create_session(session: SessionSportCreate, _: dict = Depends(get_current_user)):
     """Créer une nouvelle session sport"""
     try:
         # Extraire les exercices si présents
@@ -86,7 +87,7 @@ async def create_session(session: SessionSportCreate):
 
 
 @router.put("/{session_id}", response_model=SessionSportRead)
-async def update_session(session_id: UUID, session: SessionSportUpdate):
+async def update_session(session_id: UUID, session: SessionSportUpdate, _: dict = Depends(get_current_user)):
     """Mettre à jour une session sport"""
     try:
         data = session.model_dump(exclude_unset=True)
@@ -107,7 +108,7 @@ async def update_session(session_id: UUID, session: SessionSportUpdate):
 
 
 @router.delete("/{session_id}", status_code=204)
-async def delete_session(session_id: UUID):
+async def delete_session(session_id: UUID, _: dict = Depends(get_current_user)):
     """Supprimer une session sport"""
     try:
         result = supabase_admin.table("sessions_sport").delete().eq("id_session", str(session_id)).execute()

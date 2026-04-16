@@ -3,11 +3,14 @@ Router principal pour l'API v1
 """
 
 from fastapi import APIRouter
-from app.api.v1.endpoints import health, utilisateurs, aliments, exercices, journal, sessions, mesures
+from app.api.v1.endpoints import health, utilisateurs, aliments, exercices, journal, sessions, mesures, auth
 
 api_router = APIRouter()
 
-# Inclusion des routers
+# Auth (public)
+api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
+
+# Ressources
 api_router.include_router(health.router, prefix="/health", tags=["health"])
 api_router.include_router(utilisateurs.router, prefix="/utilisateurs", tags=["utilisateurs"])
 api_router.include_router(aliments.router, prefix="/aliments", tags=["aliments"])
