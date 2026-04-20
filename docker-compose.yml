@@ -10,10 +10,10 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_URL=http://host.docker.internal:54321
       - SUPABASE_KEY=${SUPABASE_KEY}
       - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
-      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:54322/postgres
       - JWT_SECRET=${JWT_SECRET}
     volumes:
       - ./api:/app
@@ -50,9 +50,9 @@ services:
       dockerfile: Dockerfile
     container_name: mspr_etl
     environment:
-      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_URL=http://host.docker.internal:54321
       - SUPABASE_KEY=${SUPABASE_KEY}
-      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:54322/postgres
       - ETL_SCHEDULE=${ETL_SCHEDULE:-0 */6 * * *}
     volumes:
       - ./etl:/app
