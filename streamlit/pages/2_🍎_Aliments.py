@@ -1,10 +1,12 @@
 import streamlit as st
 import pandas as pd
 from utils.api_client import api_client
+from utils.flash import render_flash, flash_success
 
 st.set_page_config(page_title="Aliments", page_icon="🍎", layout="wide")
 st.title("🍎 Catalogue d'Aliments")
 st.markdown("---")
+render_flash()
 
 tab_liste, tab_ajouter = st.tabs(["📋 Liste des aliments", "➕ Ajouter un aliment"])
 
@@ -91,8 +93,11 @@ with tab_ajouter:
                     "source": source
                 }
                 try:
-                    api_client.post("/aliments", data)
-                    st.success(f"Aliment '{nom}' ajouté avec succès!")
+                    res = api_client.post("/aliments", data)
+                    uid = res.get("id_aliment", "—")
+                    flash_success(
+                        f"**Aliment ajouté** — « {nom} » est disponible dans l’onglet « Liste » (ID : `{uid}`)."
+                    )
                     st.rerun()
                 except Exception as e:
                     st.error(f"Erreur: {e}")

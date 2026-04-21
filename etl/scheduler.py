@@ -38,10 +38,10 @@ def run_etl_pipeline():
     """
     Pipeline ETL principal.
     Sources intégrées :
-      1. ExerciseDB API          → exercices
-      2. Daily Food & Nutrition  → aliments
-      3. Gym Members Exercise    → utilisateurs + mesures_biometriques
-      4. Diet Recommendations    → utilisateurs
+      1. ExerciseDB API                    → exercices
+      2. Daily Food & Nutrition (Kaggle)   → aliments
+      3. Gym Members Exercise (Kaggle)     → utilisateurs + mesures_biometriques
+      4. Diet Recommendations (Kaggle)    → utilisateurs
     """
     try:
         logger.info("=" * 60)

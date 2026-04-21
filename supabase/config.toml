@@ -57,8 +57,6 @@ enable_confirmations = false
 [auth.sms]
 enable_signup = true
 enable_confirmations = false
-otp_exp = 60
-otp_length = 6
 
 [analytics]
 enabled = false

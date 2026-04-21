@@ -10,7 +10,9 @@ from uuid import UUID
 
 class UtilisateurBase(BaseModel):
     """Schéma de base pour un utilisateur"""
-    email: EmailStr
+    # str : les lignes en base peuvent avoir des e-mails « techniques » rejetés par EmailStr
+    # (ex. domaines réservés .invalid). La validation stricte est appliquée sur UtilisateurCreate.
+    email: str
     nom: Optional[str] = None
     prenom: Optional[str] = None
     age: Optional[int] = Field(None, gt=0, lt=150)
@@ -23,7 +25,7 @@ class UtilisateurBase(BaseModel):
 
 class UtilisateurCreate(UtilisateurBase):
     """Schéma pour créer un utilisateur"""
-    pass
+    email: EmailStr
 
 
 class UtilisateurUpdate(BaseModel):

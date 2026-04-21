@@ -2,10 +2,12 @@ import streamlit as st
 import pandas as pd
 from datetime import date, datetime
 from utils.api_client import api_client
+from utils.flash import render_flash, flash_success
 
 st.set_page_config(page_title="Journal Alimentaire", page_icon="📔", layout="wide")
 st.title("📔 Journal Alimentaire")
 st.markdown("---")
+render_flash()
 
 # Charger les utilisateurs et aliments pour les sélecteurs
 try:
@@ -93,8 +95,12 @@ with tab_ajouter:
                     "notes": notes if notes else None
                 }
                 try:
-                    api_client.post("/journal", data)
-                    st.success("Entrée ajoutée au journal!")
+                    res = api_client.post("/journal", data)
+                    jid = res.get("id_journal", "—")
+                    flash_success(
+                        f"**Entrée enregistrée** — {aliment_selected} le {date_entree.isoformat()} "
+                        f"(journal visible dans « Consulter »). ID : `{jid}`"
+                    )
                     st.rerun()
                 except Exception as e:
                     st.error(f"Erreur: {e}")

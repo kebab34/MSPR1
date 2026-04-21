@@ -2,10 +2,12 @@ import streamlit as st
 import pandas as pd
 from datetime import date, datetime
 from utils.api_client import api_client
+from utils.flash import render_flash, flash_success
 
 st.set_page_config(page_title="Sessions Sport", page_icon="🏃", layout="wide")
 st.title("🏃 Sessions de Sport")
 st.markdown("---")
+render_flash()
 
 # Charger les utilisateurs et exercices
 try:
@@ -105,7 +107,11 @@ with tab_ajouter:
             }
             try:
                 result = api_client.post("/sessions", data)
-                st.success("Session enregistrée!")
+                sid = result.get("id_session", "—")
+                flash_success(
+                    f"**Session enregistrée** — {date_session.isoformat()} · {type_session} · {duree} min. "
+                    f"Voir l’onglet « Historique ». ID : `{sid}`"
+                )
                 st.rerun()
             except Exception as e:
                 st.error(f"Erreur: {e}")

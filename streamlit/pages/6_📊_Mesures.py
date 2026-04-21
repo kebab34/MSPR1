@@ -1,10 +1,12 @@
 import streamlit as st
 import pandas as pd
 from utils.api_client import api_client
+from utils.flash import render_flash, flash_success
 
 st.set_page_config(page_title="Mesures Biométriques", page_icon="📊", layout="wide")
 st.title("📊 Mesures Biométriques")
 st.markdown("---")
+render_flash()
 
 # Charger les utilisateurs
 try:
@@ -88,8 +90,11 @@ with tab_ajouter:
                 "calories_brulees": calories_brulees if calories_brulees > 0 else None,
             }
             try:
-                api_client.post("/mesures", data)
-                st.success("Mesures enregistrées !")
+                res = api_client.post("/mesures", data)
+                mid = res.get("id_mesure", "—")
+                flash_success(
+                    f"**Mesure enregistrée** — visible dans « Historique » (poids {poids} kg). ID : `{mid}`"
+                )
                 st.rerun()
             except Exception as e:
                 st.error(f"Erreur: {e}")

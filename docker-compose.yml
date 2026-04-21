@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # API FastAPI
   api:
@@ -7,8 +5,12 @@ services:
       context: ./api
       dockerfile: Dockerfile
     container_name: mspr_api
+    # Linux : sans ceci, host.docker.internal ne se résout pas → erreur DNS / 500 sur les routes Supabase
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
-      - "8000:8000"
+      # Hôte : éviter conflit si 8000 déjà utilisé (ex. autre conteneur / api locale)
+      - "8002:8000"
     environment:
       - SUPABASE_URL=http://host.docker.internal:54321
       - SUPABASE_KEY=${SUPABASE_KEY}
@@ -30,7 +32,7 @@ services:
       dockerfile: Dockerfile
     container_name: mspr_streamlit
     ports:
-      - "8501:8501"
+      - "8502:8501"
     environment:
       - API_URL=http://api:8000
       - SUPABASE_URL=${SUPABASE_URL}
@@ -49,6 +51,8 @@ services:
       context: ./etl
       dockerfile: Dockerfile
     container_name: mspr_etl
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - SUPABASE_URL=http://host.docker.internal:54321
       - SUPABASE_KEY=${SUPABASE_KEY}

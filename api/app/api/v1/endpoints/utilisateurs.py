@@ -11,6 +11,12 @@ from app.schemas.utilisateur import UtilisateurCreate, UtilisateurUpdate, Utilis
 router = APIRouter()
 
 
+def _is_email_unique_violation(exc: BaseException) -> bool:
+    """Détecte une erreur Postgres 23505 sur la colonne email (e-mail déjà utilisé)."""
+    msg = str(exc).lower()
+    return "23505" in str(exc) and ("email" in msg or "utilisateurs_email" in msg)
+
+
 @router.get("", response_model=List[UtilisateurRead])
 async def get_utilisateurs(
     skip: int = Query(0, ge=0),
@@ -57,7 +63,14 @@ async def create_utilisateur(utilisateur: UtilisateurCreate):
             raise HTTPException(status_code=400, detail="Erreur lors de la création")
         
         return result.data[0]
+    except HTTPException:
+        raise
     except Exception as e:
+        if _is_email_unique_violation(e):
+            raise HTTPException(
+                status_code=409,
+                detail="Un utilisateur avec cet e-mail existe déjà.",
+            )
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création: {str(e)}")
 
 

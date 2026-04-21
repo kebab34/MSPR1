@@ -1,10 +1,12 @@
 import streamlit as st
 import pandas as pd
 from utils.api_client import api_client
+from utils.flash import render_flash, flash_success
 
 st.set_page_config(page_title="Utilisateurs", page_icon="👤", layout="wide")
 st.title("👤 Gestion des Utilisateurs")
 st.markdown("---")
+render_flash()
 
 # Tabs pour organiser les actions
 tab_liste, tab_ajouter = st.tabs(["📋 Liste des utilisateurs", "➕ Ajouter un utilisateur"])
@@ -79,7 +81,11 @@ with tab_ajouter:
                 }
                 try:
                     result = api_client.post("/utilisateurs", data)
-                    st.success(f"Utilisateur {prenom} {nom} créé avec succès!")
+                    uid = result.get("id_utilisateur", "—")
+                    flash_success(
+                        f"**Enregistrement réussi** — {prenom} {nom} (`{email}`) figure maintenant dans l’onglet « Liste ». "
+                        f"ID : `{uid}`"
+                    )
                     st.rerun()
                 except Exception as e:
                     st.error(f"Erreur: {e}")
