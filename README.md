@@ -246,8 +246,5 @@ Utilisez l'interface Supabase ou des migrations SQL pour gérer le schéma de ba
 - [ ] Ajouter des métriques et monitoring
 - [ ] Déploiement en production (CI/CD)
 
-## 👥 Contribution
-
-Ce projet est développé dans le cadre d'un projet EPSI
 
 
