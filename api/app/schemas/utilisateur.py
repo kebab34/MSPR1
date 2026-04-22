@@ -21,6 +21,8 @@ class UtilisateurBase(BaseModel):
     taille: Optional[float] = Field(None, gt=0)
     objectifs: Optional[List[str]] = []
     type_abonnement: str = Field("freemium", pattern="^(freemium|premium|premium\\+|B2B)$")
+    app_role: str = Field("user", pattern="^(admin|user)$")
+    auth_id: Optional[UUID] = None
 
 
 class UtilisateurCreate(UtilisateurBase):
@@ -38,6 +40,7 @@ class UtilisateurUpdate(BaseModel):
     taille: Optional[float] = Field(None, gt=0)
     objectifs: Optional[List[str]] = None
     type_abonnement: Optional[str] = Field(None, pattern="^(freemium|premium|premium\\+|B2B)$")
+    app_role: Optional[str] = Field(None, pattern="^(admin|user)$")
 
 
 class UtilisateurRead(UtilisateurBase):

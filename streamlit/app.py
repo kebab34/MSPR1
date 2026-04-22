@@ -1,5 +1,6 @@
 import streamlit as st
 from utils.style import inject_css, kpi_cards
+from utils.auth_session import ensure_authenticated, render_auth_sidebar
 
 st.set_page_config(
     page_title="HealthAI Coach",
@@ -9,6 +10,7 @@ st.set_page_config(
 )
 
 inject_css()
+ensure_authenticated()
 
 try:
     from utils.api_client import api_client
@@ -84,37 +86,33 @@ FEATURES = [
      "Suivi du poids, fréquence cardiaque, sommeil et calories brûlées dans le temps."),
 ]
 
-cols = st.columns(3)
-for i, (grad, icon, title, desc) in enumerate(FEATURES):
-    with cols[i % 3]:
-        st.markdown(f"""
-        <div style="
-            background:white;border-radius:14px;padding:1.5rem;
-            border:1px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.04);
-            margin-bottom:1rem;transition:all 0.2s;
-        ">
-            <div style="
-                width:46px;height:46px;border-radius:12px;
-                background:{grad};display:flex;align-items:center;
-                justify-content:center;font-size:1.4rem;margin-bottom:0.8rem;
-            ">{icon}</div>
-            <div style="font-size:1rem;font-weight:700;color:#1e293b;margin-bottom:0.4rem;">{title}</div>
-            <div style="font-size:0.85rem;color:#64748b;line-height:1.5;">{desc}</div>
-        </div>
-        """, unsafe_allow_html=True)
+def _feature_cards_html(features: list) -> str:
+    parts = []
+    for grad, icon, title, desc in features:
+        parts.append(
+            f'<div class="fe-card">'
+            f'<div class="fe-card-icon" style="background:{grad};">{icon}</div>'
+            f'<div class="fe-card-title">{title}</div>'
+            f'<p class="fe-card-desc">{desc}</p>'
+            f"</div>"
+        )
+    return f'<div class="fe-wrap">{"".join(parts)}</div>'
+
+
+st.markdown(_feature_cards_html(FEATURES), unsafe_allow_html=True)
 
 # ── Quick actions ─────────────────────────────────────────────────────────────
 st.markdown('<div class="section-hdr">⚡ Navigation rapide</div>', unsafe_allow_html=True)
 col1, col2, col3 = st.columns(3)
 with col1:
     if st.button("👤 Utilisateurs", use_container_width=True):
-        st.switch_page("pages/1_👤_Utilisateurs.py")
+        st.switch_page("pages/1_Utilisateurs.py")
 with col2:
     if st.button("🍎 Aliments", use_container_width=True):
-        st.switch_page("pages/2_🍎_Aliments.py")
+        st.switch_page("pages/2_Aliments.py")
 with col3:
     if st.button("🏋️ Exercices", use_container_width=True):
-        st.switch_page("pages/3_🏋️_Exercices.py")
+        st.switch_page("pages/3_Exercices.py")
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 st.sidebar.markdown("""
@@ -125,6 +123,8 @@ st.sidebar.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+st.sidebar.markdown("---")
+render_auth_sidebar()
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 🔌 État du système")
 if api_connected:

@@ -25,6 +25,7 @@ def make_utilisateur(overrides=None):
         "taille": 180.0,
         "objectifs": ["perte_de_poids"],
         "type_abonnement": "freemium",
+        "app_role": "user",
         "created_at": datetime.utcnow().isoformat(),
         "updated_at": datetime.utcnow().isoformat(),
     }
@@ -170,18 +171,18 @@ class TestUtilisateurs:
 # ---------------------------------------------------------------------------
 
 class TestAliments:
-    def test_get_list(self, client, mock_db):
+    def test_get_list(self, client, mock_db, auth_headers):
         _, mock_admin = mock_db
         mock_admin.table.return_value.select.return_value.range.return_value.order.return_value.execute.return_value = MagicMock(data=[make_aliment()])
 
-        response = client.get("/api/v1/aliments")
+        response = client.get("/api/v1/aliments", headers=auth_headers)
         assert response.status_code == 200
 
-    def test_get_one_not_found(self, client, mock_db):
+    def test_get_one_not_found(self, client, mock_db, auth_headers):
         _, mock_admin = mock_db
         mock_admin.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
 
-        response = client.get(f"/api/v1/aliments/{uuid4()}")
+        response = client.get(f"/api/v1/aliments/{uuid4()}", headers=auth_headers)
         assert response.status_code == 404
 
 
@@ -190,18 +191,18 @@ class TestAliments:
 # ---------------------------------------------------------------------------
 
 class TestExercices:
-    def test_get_list(self, client, mock_db):
+    def test_get_list(self, client, mock_db, auth_headers):
         _, mock_admin = mock_db
         mock_admin.table.return_value.select.return_value.range.return_value.order.return_value.execute.return_value = MagicMock(data=[make_exercice()])
 
-        response = client.get("/api/v1/exercices")
+        response = client.get("/api/v1/exercices", headers=auth_headers)
         assert response.status_code == 200
 
-    def test_get_one_not_found(self, client, mock_db):
+    def test_get_one_not_found(self, client, mock_db, auth_headers):
         _, mock_admin = mock_db
         mock_admin.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
 
-        response = client.get(f"/api/v1/exercices/{uuid4()}")
+        response = client.get(f"/api/v1/exercices/{uuid4()}", headers=auth_headers)
         assert response.status_code == 404
 
 
@@ -221,11 +222,11 @@ class TestJournal:
             "updated_at": datetime.utcnow().isoformat(),
         }
 
-    def test_get_list_public(self, client, mock_db):
+    def test_get_list_public(self, client, mock_db, auth_headers):
         _, mock_admin = mock_db
         mock_admin.table.return_value.select.return_value.range.return_value.order.return_value.execute.return_value = MagicMock(data=[self._journal_entry()])
 
-        response = client.get("/api/v1/journal")
+        response = client.get("/api/v1/journal", headers=auth_headers)
         assert response.status_code == 200
 
     def test_create_requires_auth(self, client, mock_db):
@@ -271,11 +272,11 @@ class TestSessions:
             "updated_at": datetime.utcnow().isoformat(),
         }
 
-    def test_get_list_public(self, client, mock_db):
+    def test_get_list_public(self, client, mock_db, auth_headers):
         _, mock_admin = mock_db
         mock_admin.table.return_value.select.return_value.range.return_value.order.return_value.execute.return_value = MagicMock(data=[self._session()])
 
-        response = client.get("/api/v1/sessions")
+        response = client.get("/api/v1/sessions", headers=auth_headers)
         assert response.status_code == 200
 
     def test_create_requires_auth(self, client, mock_db):

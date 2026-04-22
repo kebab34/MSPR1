@@ -1,10 +1,12 @@
 """
-Dépendances FastAPI réutilisables (auth, etc.)
+Dépendances FastAPI — auth et rôles
 """
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.core.security import verify_token
+from app.core.config import get_admin_email_set
+from app.core.user_profile import apply_admin_bootstrap, fetch_app_profile
 
 security = HTTPBearer()
 
@@ -12,10 +14,7 @@ security = HTTPBearer()
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> dict:
-    """
-    Dépendance qui extrait et valide le token Bearer.
-    Retourne les infos de l'utilisateur connecté.
-    """
+    """Token JWT valide : identité Supabase Auth (sub, email)."""
     payload = verify_token(credentials.credentials)
     user_id: str = payload.get("sub")
     if not user_id:
@@ -24,3 +23,27 @@ async def get_current_user(
             detail="Token invalide : champ 'sub' manquant",
         )
     return {"id": user_id, "email": payload.get("email", "")}
+
+
+async def require_admin(user: dict = Depends(get_current_user)) -> dict:
+    """Gestion des profils, utilisateurs, etc. — rôle application admin requis."""
+    prof = fetch_app_profile(user["id"], user.get("email", ""))
+    if not prof:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Aucun profil métier lié à ce compte. Contactez un administrateur.",
+        )
+    prof = apply_admin_bootstrap(
+        user.get("email", ""), prof, get_admin_email_set()
+    )
+    if str(prof.get("app_role", "user")) != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Réservé aux administrateurs",
+        )
+    return {**user, "profile": prof}
+
+
+async def require_user(user: dict = Depends(get_current_user)) -> dict:
+    """Toute ressource connectée (user ou admin)."""
+    return user

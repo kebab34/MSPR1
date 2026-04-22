@@ -3,7 +3,7 @@ Tests pour les endpoints d'authentification : /api/v1/auth/
 """
 
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 
 # ---------------------------------------------------------------------------
@@ -73,7 +73,8 @@ class TestRegister:
         mock_supa, mock_admin = mock_db
         user = MagicMock()
         user.id = "new-user-uuid"
-        mock_supa.auth.sign_up.return_value = MagicMock(user=user)
+        # session=None : sinon MagicMock(session) serait truthy et casserait la validation de RegisterResponse
+        mock_supa.auth.sign_up.return_value = MagicMock(user=user, session=None)
         mock_admin.table.return_value.insert.return_value.execute.return_value = MagicMock()
 
         response = client.post("/api/v1/auth/register", json={
@@ -120,12 +121,15 @@ class TestRegister:
 # ---------------------------------------------------------------------------
 
 class TestGetMe:
-    def test_me_authenticated(self, client, auth_headers):
+    @patch("app.api.v1.endpoints.auth.fetch_app_profile", return_value=None)
+    def test_me_authenticated(self, _fetch, client, auth_headers):
         response = client.get("/api/v1/auth/me", headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
         assert data["id"] == "user-test-uuid-1234"
         assert data["email"] == "test@example.com"
+        assert data["app_role"] == "user"
+        assert data["type_abonnement"] == "freemium"
 
     def test_me_no_token(self, client):
         response = client.get("/api/v1/auth/me")
@@ -134,3 +138,49 @@ class TestGetMe:
     def test_me_invalid_token(self, client):
         response = client.get("/api/v1/auth/me", headers={"Authorization": "Bearer invalid.token.here"})
         assert response.status_code == 401
+
+
+# ---------------------------------------------------------------------------
+# PATCH /auth/me
+# ---------------------------------------------------------------------------
+
+class TestPatchMe:
+    @patch("app.api.v1.endpoints.auth.fetch_app_profile")
+    @patch("app.api.v1.endpoints.auth.apply_admin_bootstrap")
+    @patch("app.api.v1.endpoints.auth.supabase_admin")
+    def test_patch_me_success(self, mock_admin, mock_bootstrap, mock_fetch, client, auth_headers):
+        prof1 = {
+            "id_utilisateur": "u-1",
+            "email": "test@example.com",
+            "app_role": "admin",
+            "type_abonnement": "freemium",
+            "nom": None,
+            "prenom": None,
+            "age": None,
+            "sexe": None,
+            "poids": None,
+            "taille": None,
+            "objectifs": [],
+        }
+        prof2 = {**prof1, "prenom": "Jean", "type_abonnement": "premium"}
+        mock_fetch.side_effect = [prof1, prof2]
+        mock_bootstrap.side_effect = lambda e, p, s: p
+
+        response = client.patch(
+            "/api/v1/auth/me",
+            headers=auth_headers,
+            json={"prenom": "Jean", "type_abonnement": "premium"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["prenom"] == "Jean"
+        assert data["type_abonnement"] == "premium"
+
+    @patch("app.api.v1.endpoints.auth.fetch_app_profile", return_value=None)
+    def test_patch_me_no_profile(self, _fetch, client, auth_headers):
+        r = client.patch(
+            "/api/v1/auth/me",
+            headers=auth_headers,
+            json={"prenom": "X"},
+        )
+        assert r.status_code == 404

@@ -2,16 +2,19 @@ import streamlit as st
 import pandas as pd
 from datetime import date
 from utils.api_client import api_client
+from utils.auth_session import ensure_authenticated, render_auth_sidebar, list_utilisateurs_for_pickers
 from utils.flash import render_flash, flash_success
 from utils.style import inject_css, page_header, badge, section_header
 
 st.set_page_config(page_title="Sessions Sport", page_icon="🏃", layout="wide")
 inject_css()
+ensure_authenticated()
+render_auth_sidebar()
 page_header("🏃", "Sessions de Sport", "Historique et planification des entraînements")
 render_flash()
 
 try:
-    utilisateurs = api_client.get("/utilisateurs")
+    utilisateurs = list_utilisateurs_for_pickers()
     exercices = api_client.get("/exercices")
 except Exception as e:
     st.error(f"Erreur de connexion à l'API: {e}")

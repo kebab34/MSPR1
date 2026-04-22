@@ -1,11 +1,14 @@
 import streamlit as st
 import pandas as pd
 from utils.api_client import api_client
+from utils.auth_session import ensure_authenticated, render_auth_sidebar
 from utils.flash import render_flash, flash_success
 from utils.style import inject_css, page_header, macro_bar, section_header
 
 st.set_page_config(page_title="Aliments", page_icon="🍎", layout="wide")
 inject_css()
+ensure_authenticated()
+render_auth_sidebar()
 page_header("🍎", "Catalogue d'Aliments", "500 aliments avec valeurs nutritionnelles complètes")
 render_flash()
 

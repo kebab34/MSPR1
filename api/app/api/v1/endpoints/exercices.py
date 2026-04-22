@@ -2,11 +2,12 @@
 Endpoints pour la gestion des exercices
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List, Optional
 from uuid import UUID
 from app.core.database import supabase_admin
 from app.schemas.exercice import ExerciceCreate, ExerciceUpdate, ExerciceRead
+from app.api.v1.deps import get_current_user
 
 router = APIRouter()
 
@@ -18,7 +19,8 @@ async def get_exercices(
     type: Optional[str] = None,
     groupe_musculaire: Optional[str] = None,
     niveau: Optional[str] = None,
-    search: Optional[str] = None
+    search: Optional[str] = None,
+    _u: dict = Depends(get_current_user),
 ):
     """Récupérer la liste des exercices"""
     try:
@@ -40,7 +42,7 @@ async def get_exercices(
 
 
 @router.get("/{exercice_id}", response_model=ExerciceRead)
-async def get_exercice(exercice_id: UUID):
+async def get_exercice(exercice_id: UUID, _u: dict = Depends(get_current_user)):
     """Récupérer un exercice par son ID"""
     try:
         result = supabase_admin.table("exercices").select("*").eq("id_exercice", str(exercice_id)).execute()
@@ -56,7 +58,7 @@ async def get_exercice(exercice_id: UUID):
 
 
 @router.post("", response_model=ExerciceRead, status_code=201)
-async def create_exercice(exercice: ExerciceCreate):
+async def create_exercice(exercice: ExerciceCreate, _u: dict = Depends(get_current_user)):
     """Créer un nouvel exercice"""
     try:
         data = exercice.model_dump()
@@ -71,7 +73,9 @@ async def create_exercice(exercice: ExerciceCreate):
 
 
 @router.put("/{exercice_id}", response_model=ExerciceRead)
-async def update_exercice(exercice_id: UUID, exercice: ExerciceUpdate):
+async def update_exercice(
+    exercice_id: UUID, exercice: ExerciceUpdate, _u: dict = Depends(get_current_user)
+):
     """Mettre à jour un exercice"""
     try:
         data = exercice.model_dump(exclude_unset=True)
@@ -92,7 +96,7 @@ async def update_exercice(exercice_id: UUID, exercice: ExerciceUpdate):
 
 
 @router.delete("/{exercice_id}", status_code=204)
-async def delete_exercice(exercice_id: UUID):
+async def delete_exercice(exercice_id: UUID, _u: dict = Depends(get_current_user)):
     """Supprimer un exercice"""
     try:
         result = supabase_admin.table("exercices").delete().eq("id_exercice", str(exercice_id)).execute()

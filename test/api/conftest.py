@@ -26,14 +26,26 @@ _mock_supabase_admin = MagicMock()
 with patch("supabase.create_client", return_value=_mock_supabase):
     from fastapi.testclient import TestClient
     from app.main import app
+    from app.api.v1 import deps as _deps
     import app.core.database as db
     db.supabase = _mock_supabase
     db.supabase_admin = _mock_supabase_admin
 
+    async def _fake_require_admin():
+        return {
+            "id": "admin-test-uuid",
+            "email": "admin@example.com",
+            "profile": {"app_role": "admin", "id_utilisateur": "00000000-0000-0000-0000-000000000001"},
+        }
+
+    # Utilisateurs : rôle admin sans JWT dans les tests unitaires
+    app.dependency_overrides[_deps.require_admin] = _fake_require_admin
+
 
 @pytest.fixture
 def client():
-    """Client de test FastAPI"""
+    from app.main import app
+    from fastapi.testclient import TestClient
     return TestClient(app, raise_server_exceptions=False)
 
 

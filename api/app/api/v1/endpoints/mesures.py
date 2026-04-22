@@ -19,7 +19,8 @@ async def get_mesures(
     date_debut: Optional[date] = None,
     date_fin: Optional[date] = None,
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000)
+    limit: int = Query(100, ge=1, le=1000),
+    _u: dict = Depends(get_current_user),
 ):
     """Récupérer la liste des mesures biométriques"""
     try:
@@ -39,7 +40,7 @@ async def get_mesures(
 
 
 @router.get("/{mesure_id}", response_model=MesureBiometriqueRead)
-async def get_mesure(mesure_id: UUID):
+async def get_mesure(mesure_id: UUID, _u: dict = Depends(get_current_user)):
     """Récupérer une mesure biométrique par son ID"""
     try:
         result = supabase_admin.table("mesures_biometriques").select("*").eq("id_mesure", str(mesure_id)).execute()

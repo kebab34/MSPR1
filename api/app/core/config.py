@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRATION: int = 3600  # 1 heure
     
+    # Admins (emails) : promotion automatique app_role=admin à la connexion /me
+    ADMIN_EMAILS: str = ""
+
     # CORS
     CORS_ORIGINS: List[str] = ["http://localhost:8501", "http://localhost:3000"]
     
@@ -42,4 +45,10 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+def get_admin_email_set() -> List[str]:
+    if not (settings.ADMIN_EMAILS and settings.ADMIN_EMAILS.strip()):
+        return []
+    return [e.strip().lower() for e in settings.ADMIN_EMAILS.split(",") if e.strip()]
 

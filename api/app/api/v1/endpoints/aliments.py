@@ -2,11 +2,12 @@
 Endpoints pour la gestion des aliments
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List, Optional
 from uuid import UUID
 from app.core.database import supabase_admin
 from app.schemas.aliment import AlimentCreate, AlimentUpdate, AlimentRead
+from app.api.v1.deps import get_current_user
 
 router = APIRouter()
 
@@ -15,9 +16,10 @@ router = APIRouter()
 async def get_aliments(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    search: Optional[str] = None
+    search: Optional[str] = None,
+    _u: dict = Depends(get_current_user),
 ):
-    """Récupérer la liste des aliments"""
+    """Récupérer la liste des aliments (utilisateur authentifié)"""
     try:
         query = supabase_admin.table("aliments").select("*")
         
@@ -31,7 +33,7 @@ async def get_aliments(
 
 
 @router.get("/{aliment_id}", response_model=AlimentRead)
-async def get_aliment(aliment_id: UUID):
+async def get_aliment(aliment_id: UUID, _u: dict = Depends(get_current_user)):
     """Récupérer un aliment par son ID"""
     try:
         result = supabase_admin.table("aliments").select("*").eq("id_aliment", str(aliment_id)).execute()
@@ -47,7 +49,7 @@ async def get_aliment(aliment_id: UUID):
 
 
 @router.post("", response_model=AlimentRead, status_code=201)
-async def create_aliment(aliment: AlimentCreate):
+async def create_aliment(aliment: AlimentCreate, _u: dict = Depends(get_current_user)):
     """Créer un nouvel aliment"""
     try:
         data = aliment.model_dump()
@@ -62,7 +64,9 @@ async def create_aliment(aliment: AlimentCreate):
 
 
 @router.put("/{aliment_id}", response_model=AlimentRead)
-async def update_aliment(aliment_id: UUID, aliment: AlimentUpdate):
+async def update_aliment(
+    aliment_id: UUID, aliment: AlimentUpdate, _u: dict = Depends(get_current_user)
+):
     """Mettre à jour un aliment"""
     try:
         data = aliment.model_dump(exclude_unset=True)
@@ -83,7 +87,7 @@ async def update_aliment(aliment_id: UUID, aliment: AlimentUpdate):
 
 
 @router.delete("/{aliment_id}", status_code=204)
-async def delete_aliment(aliment_id: UUID):
+async def delete_aliment(aliment_id: UUID, _u: dict = Depends(get_current_user)):
     """Supprimer un aliment"""
     try:
         result = supabase_admin.table("aliments").delete().eq("id_aliment", str(aliment_id)).execute()

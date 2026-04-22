@@ -2,11 +2,12 @@
 Endpoints pour la gestion des utilisateurs
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List, Optional
 from uuid import UUID
 from app.core.database import supabase_admin
 from app.schemas.utilisateur import UtilisateurCreate, UtilisateurUpdate, UtilisateurRead
+from app.api.v1.deps import require_admin
 
 router = APIRouter()
 
@@ -19,11 +20,12 @@ def _is_email_unique_violation(exc: BaseException) -> bool:
 
 @router.get("", response_model=List[UtilisateurRead])
 async def get_utilisateurs(
+    _admin: dict = Depends(require_admin),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     type_abonnement: Optional[str] = None
 ):
-    """Récupérer la liste des utilisateurs"""
+    """Récupérer la liste des utilisateurs (admin)"""
     try:
         query = supabase_admin.table("utilisateurs").select("*")
         
@@ -37,8 +39,11 @@ async def get_utilisateurs(
 
 
 @router.get("/{utilisateur_id}", response_model=UtilisateurRead)
-async def get_utilisateur(utilisateur_id: UUID):
-    """Récupérer un utilisateur par son ID"""
+async def get_utilisateur(
+    utilisateur_id: UUID,
+    _admin: dict = Depends(require_admin),
+):
+    """Récupérer un utilisateur par son ID (admin)"""
     try:
         result = supabase_admin.table("utilisateurs").select("*").eq("id_utilisateur", str(utilisateur_id)).execute()
         
@@ -53,8 +58,11 @@ async def get_utilisateur(utilisateur_id: UUID):
 
 
 @router.post("", response_model=UtilisateurRead, status_code=201)
-async def create_utilisateur(utilisateur: UtilisateurCreate):
-    """Créer un nouvel utilisateur"""
+async def create_utilisateur(
+    utilisateur: UtilisateurCreate,
+    _admin: dict = Depends(require_admin),
+):
+    """Créer un nouvel utilisateur (admin)"""
     try:
         data = utilisateur.model_dump()
         result = supabase_admin.table("utilisateurs").insert(data).execute()
@@ -75,8 +83,12 @@ async def create_utilisateur(utilisateur: UtilisateurCreate):
 
 
 @router.put("/{utilisateur_id}", response_model=UtilisateurRead)
-async def update_utilisateur(utilisateur_id: UUID, utilisateur: UtilisateurUpdate):
-    """Mettre à jour un utilisateur"""
+async def update_utilisateur(
+    utilisateur_id: UUID,
+    utilisateur: UtilisateurUpdate,
+    _admin: dict = Depends(require_admin),
+):
+    """Mettre à jour un utilisateur (admin)"""
     try:
         data = utilisateur.model_dump(exclude_unset=True)
         
@@ -96,8 +108,11 @@ async def update_utilisateur(utilisateur_id: UUID, utilisateur: UtilisateurUpdat
 
 
 @router.delete("/{utilisateur_id}", status_code=204)
-async def delete_utilisateur(utilisateur_id: UUID):
-    """Supprimer un utilisateur"""
+async def delete_utilisateur(
+    utilisateur_id: UUID,
+    _admin: dict = Depends(require_admin),
+):
+    """Supprimer un utilisateur (admin)"""
     try:
         result = supabase_admin.table("utilisateurs").delete().eq("id_utilisateur", str(utilisateur_id)).execute()
         

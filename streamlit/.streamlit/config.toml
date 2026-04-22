@@ -1,0 +1,23 @@
+# Thème sombre par défaut ; le bloc [theme.light] reprend les mêmes couleurs
+# pour qu’un choix "clair" dans le menu n’impose pas un écran blanc (app 100 % sombre).
+[theme]
+base = "dark"
+primaryColor = "#667eea"
+backgroundColor = "#0e1117"
+secondaryBackgroundColor = "#1e1e2e"
+textColor = "#f8fafc"
+linkColor = "#a5b4fc"
+font = "sans serif"
+baseRadius = "0.5rem"
+showWidgetBorder = true
+
+# Reprise des couleurs sombres (pas de vrai mode clair)
+[theme.light]
+primaryColor = "#667eea"
+backgroundColor = "#0e1117"
+secondaryBackgroundColor = "#1e1e2e"
+textColor = "#f8fafc"
+linkColor = "#a5b4fc"
+font = "sans serif"
+baseRadius = "0.5rem"
+showWidgetBorder = true

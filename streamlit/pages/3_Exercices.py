@@ -1,10 +1,13 @@
 import streamlit as st
 import pandas as pd
 from utils.api_client import api_client
+from utils.auth_session import ensure_authenticated, render_auth_sidebar
 from utils.style import inject_css, page_header, badge, section_header
 
 st.set_page_config(page_title="Exercices", page_icon="🏋️", layout="wide")
 inject_css()
+ensure_authenticated()
+render_auth_sidebar()
 page_header("🏋️", "Bibliothèque d'Exercices", "200 exercices classés par groupe musculaire, type et niveau")
 
 try:

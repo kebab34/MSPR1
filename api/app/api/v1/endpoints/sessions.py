@@ -19,7 +19,8 @@ async def get_sessions(
     date_debut: Optional[date] = None,
     date_fin: Optional[date] = None,
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000)
+    limit: int = Query(100, ge=1, le=1000),
+    _u: dict = Depends(get_current_user),
 ):
     """Récupérer la liste des sessions sport"""
     try:
@@ -39,7 +40,7 @@ async def get_sessions(
 
 
 @router.get("/{session_id}", response_model=SessionSportRead)
-async def get_session(session_id: UUID):
+async def get_session(session_id: UUID, _u: dict = Depends(get_current_user)):
     """Récupérer une session par son ID"""
     try:
         result = supabase_admin.table("sessions_sport").select("*").eq("id_session", str(session_id)).execute()

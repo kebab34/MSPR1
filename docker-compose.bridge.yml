@@ -1,21 +1,24 @@
+# Réseau bridge isolé (DNS entre conteneurs : http://api:8000).
+# Utiliser si `docker compose up` fonctionne chez toi ; sinon le docker-compose.yml
+# par défaut est en network_mode: host (Linux, contourne souvent les bugs iptables Docker).
+#
+#   docker compose -f docker-compose.bridge.yml up -d --build
+
 services:
-  # API FastAPI
   api:
     build:
       context: ./api
       dockerfile: Dockerfile
     container_name: mspr_api
-    # Linux : sans ceci, host.docker.internal ne se résout pas → erreur DNS / 500 sur les routes Supabase
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      # Hôte : éviter conflit si 8000 déjà utilisé (ex. autre conteneur / api locale)
       - "8002:8000"
     environment:
-      - SUPABASE_URL=http://host.docker.internal:54321
+      - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_KEY}
       - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
-      - DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:54322/postgres
+      - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
       - ADMIN_EMAILS=${ADMIN_EMAILS:-}
     volumes:
@@ -26,19 +29,16 @@ services:
     networks:
       - mspr_network
 
-  # Interface Admin Streamlit
   streamlit:
     build:
       context: ./streamlit
       dockerfile: Dockerfile
     container_name: mspr_streamlit
     ports:
-      # Même port hôte que dans les logs Streamlit (évite confusion avec localhost:8501)
       - "8501:8501"
     environment:
       - API_URL=http://api:8000
-      # Même cible que api/etl : Supabase CLI sur la machine hôte (voir docs/SUPABASE_LOCAL.md)
-      - SUPABASE_URL=http://host.docker.internal:54321
+      - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_KEY}
     volumes:
       - ./streamlit:/app
@@ -48,7 +48,6 @@ services:
     networks:
       - mspr_network
 
-  # Service ETL
   etl:
     build:
       context: ./etl
@@ -57,9 +56,9 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
-      - SUPABASE_URL=http://host.docker.internal:54321
+      - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_KEY}
-      - DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:54322/postgres
+      - DATABASE_URL=${DATABASE_URL}
       - ETL_SCHEDULE=${ETL_SCHEDULE:-0 */6 * * *}
     volumes:
       - ./etl:/app
@@ -76,5 +75,3 @@ networks:
 volumes:
   etl_data:
     driver: local
-
-

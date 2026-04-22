@@ -19,7 +19,8 @@ async def get_journal_entries(
     date_debut: Optional[date] = None,
     date_fin: Optional[date] = None,
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000)
+    limit: int = Query(100, ge=1, le=1000),
+    _u: dict = Depends(get_current_user),
 ):
     """Récupérer les entrées du journal alimentaire"""
     try:
@@ -39,7 +40,7 @@ async def get_journal_entries(
 
 
 @router.get("/{journal_id}", response_model=JournalAlimentaireRead)
-async def get_journal_entry(journal_id: UUID):
+async def get_journal_entry(journal_id: UUID, _u: dict = Depends(get_current_user)):
     """Récupérer une entrée du journal par son ID"""
     try:
         result = supabase_admin.table("journal_alimentaire").select("*").eq("id_journal", str(journal_id)).execute()

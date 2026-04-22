@@ -1,16 +1,19 @@
 import streamlit as st
 import pandas as pd
 from utils.api_client import api_client
+from utils.auth_session import ensure_authenticated, render_auth_sidebar, list_utilisateurs_for_pickers
 from utils.flash import render_flash, flash_success
 from utils.style import inject_css, page_header, section_header
 
 st.set_page_config(page_title="Mesures Biométriques", page_icon="📊", layout="wide")
 inject_css()
+ensure_authenticated()
+render_auth_sidebar()
 page_header("📏", "Mesures Biométriques", "Suivi du poids, fréquence cardiaque, sommeil et calories brûlées")
 render_flash()
 
 try:
-    utilisateurs = api_client.get("/utilisateurs")
+    utilisateurs = list_utilisateurs_for_pickers()
 except Exception as e:
     st.error(f"Erreur de connexion à l'API: {e}")
     utilisateurs = []
