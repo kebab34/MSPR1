@@ -9,8 +9,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      # Hôte : éviter conflit si 8000 déjà utilisé (ex. autre conteneur / api locale)
-      - "8002:8000"
+      # Hôte : API exposée sur 8001 vers le port interne 8000.
+      - "8001:8000"
     environment:
       - SUPABASE_URL=http://host.docker.internal:54321
       - SUPABASE_KEY=${SUPABASE_KEY}
@@ -23,6 +23,7 @@ services:
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     depends_on:
       - etl
+    restart: unless-stopped
     networks:
       - mspr_network
 
@@ -32,14 +33,18 @@ services:
       context: ./web
       dockerfile: Dockerfile
     container_name: mspr_web
+    # Même principe que l’API : passer par l’hôte (port publié 8001) si le trafic
+    # conteneur→conteneur est filtré (iptables/UFW), ce qui provoquait timeout/HTTP 500.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
-      # Hôte : défaut 8003 (évite le conflit avec d’autres apps sur 8000, ex. dashboards Python).
-      # Forcer 8000 : WEB_PORT=8000 dans `.env` après avoir arrêté l’autre service sur ce port.
-      - "${WEB_PORT:-8003}:3000"
+      # Hôte : défaut 8000. Pour un autre port, utiliser WEB_PORT dans `.env`.
+      - "${WEB_PORT:-8000}:3000"
     environment:
-      - API_URL=http://api:8000
+      - API_URL=http://host.docker.internal:8001
     depends_on:
       - api
+    restart: unless-stopped
     networks:
       - mspr_network
 
@@ -59,7 +64,9 @@ services:
     volumes:
       - ./etl:/app
       - ./etl/data:/app/data
-    command: python scheduler.py run
+    # Ne pas utiliser `scheduler.py run` ici : le processus se termine et, avec
+    # restart: unless-stopped, Docker redémarre en boucle → "restarting", exec impossible.
+    # Lancement manuel une fois : docker compose exec etl python scheduler.py run
     networks:
       - mspr_network
     restart: unless-stopped

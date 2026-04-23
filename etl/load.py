@@ -95,8 +95,8 @@ class SupabaseLoader:
                     for record in batch:
                         try:
                             self.client.table(table_name).upsert([record], on_conflict=on_conflict).execute()
-                        except:
-                            pass  # Ignorer les doublons
+                        except Exception as record_error:
+                            logger.warning(f"Skipped record in {table_name}: {record_error}")
             
             logger.info(f"Successfully upserted {len(records)} records into {table_name}")
             return True

@@ -81,16 +81,16 @@ MSPR1/
    ```
 
 4. **Accéder aux services**
-   - **API FastAPI** : http://localhost:8002 (port hôte mappé dans `docker-compose.yml`)
-   - **Documentation API** : http://localhost:8002/docs
-   - **Interface web (Docker)** : http://localhost:8003 par défaut — si tu vois un autre JSON sur un port, c’est une autre appli ; l’API MSPR est sur **8002**
+   - **API FastAPI** : http://localhost:8001 (port hôte mappé dans `docker-compose.yml`)
+   - **Documentation API** : http://localhost:8001/docs
+   - **Interface web (Docker)** : http://localhost:8000 par défaut — si tu vois un autre JSON sur un port, c’est une autre appli ; l’API MSPR est sur **8001**
    - **Interface web (`npm run dev` dans `web/`)** : http://localhost:3000
 
 ## 📚 Documentation des services
 
 ### API FastAPI
 
-L'API FastAPI est exposée sur le port **8002** côté hôte dans ce dépôt (`8002:8000`). La documentation interactive est sur `/docs`.
+L'API FastAPI est exposée sur le port **8001** côté hôte dans ce dépôt (`8001:8000`). La documentation interactive est sur `/docs`.
 
 #### Endpoints disponibles
 
@@ -107,13 +107,13 @@ L'API FastAPI est exposée sur le port **8002** côté hôte dans ce dépôt (`8
 
 ### Interface web (Next.js)
 
-L'interface est servie sur le port **3000**. Les appels API passent par le proxy interne ` /api/mspr/* ` (voir `web/src/app/api/mspr/`), configuré avec `API_URL` (souvent `http://api:8000` dans Docker).
+L'interface est servie sur le port **3000** (ou `WEB_PORT` dans `.env`). Les appels API passent par le proxy ` /api/mspr/* ` (voir `web/src/app/api/mspr/`), via `API_URL` (dans le `docker-compose` du dépôt : `http://host.docker.internal:8001` quand l’hôte n’arrive pas à joindre l’API en réseau bridge).
 
 #### Développement local sans Docker pour le front
 
 ```bash
 cd web
-cp .env.example .env.local   # ajuster API_URL (ex. http://127.0.0.1:8002)
+cp .env.example .env.local   # ajuster API_URL (ex. http://127.0.0.1:8001)
 npm install
 npm run dev
 ```
@@ -178,7 +178,9 @@ Les tests peuvent être ajoutés dans chaque service :
 | `DATABASE_URL` | URL de connexion PostgreSQL | `postgresql://postgres:pass@...` |
 | `JWT_SECRET` | Secret pour JWT | `your-secret-key` |
 | `ETL_SCHEDULE` | Planning ETL (format cron) | `0 */6 * * *` |
-| `API_URL` | URL de l'API pour le **conteneur web** (proxy serveur) | `http://api:8000` |
+| `API_URL` | URL de l'API pour le **conteneur web** (proxy serveur) | Voir `docker-compose.yml` (souvent `http://host.docker.internal:8001`) |
+
+**La base ne se connecte pas ?** Vérifier : `supabase start`, ports **54321** (API) et **54322** (Postgres) — *ne pas* mettre l’URL du **Studio (54323)** en `SUPABASE_URL`. Détails : [docs/SUPABASE_LOCAL.md](docs/SUPABASE_LOCAL.md) et script `./scripts/verify_stack.sh`.
 
 ## 🧪 Tests
 
@@ -220,6 +222,9 @@ docker-compose exec <service> <command>
 ```
 
 ## 📊 Supabase
+
+- Guide local (ports, Docker, `SUPABASE_URL` vs Studio) : [docs/SUPABASE_LOCAL.md](docs/SUPABASE_LOCAL.md)
+- Vérification machine : `./scripts/verify_stack.sh`
 
 ### Configuration de la base de données
 

@@ -70,10 +70,19 @@ def run_etl_pipeline():
             logger.error(f"❌ Erreur exercices : {str(e)}", exc_info=True)
 
         # ============================================================
-        # 2. ALIMENTS — Daily Food & Nutrition Dataset (Kaggle)
+        # 2. ALIMENTS — Daily Food & Nutrition Dataset (Kaggle) — fichier requis dans etl/data/
+        # (non versionné : voir `python etl/download_data.py` + identifiants Kaggle)
         # ============================================================
         try:
             nutrition_path = os.path.join(data_dir, "daily_food_nutrition_dataset.csv")
+            if not os.path.isfile(nutrition_path):
+                logger.error(
+                    "❌ [2/4] Fichier manquant : %s — sans ce CSV, aucun aliment n’est chargé. "
+                    "Télécharge les datasets : depuis la racine du projet, "
+                    "`pip install kaggle` puis `python etl/download_data.py` (ou dézippe les CSV Kaggle ici, voir le script).",
+                    nutrition_path,
+                )
+                raise FileNotFoundError(nutrition_path)
             logger.info("\n📥 [2/4] Extraction aliments (Daily Food & Nutrition Dataset)...")
             df_nutrition = extract_from_csv(nutrition_path)
             df_aliments = transform_nutrition_dataset(df_nutrition)
@@ -89,10 +98,16 @@ def run_etl_pipeline():
             logger.error(f"❌ Erreur aliments : {str(e)}", exc_info=True)
 
         # ============================================================
-        # 3. UTILISATEURS + MESURES — Gym Members Exercise Dataset (Kaggle)
+        # 3. UTILISATEURS + MESURES — Gym Members Exercise Dataset (Kaggle) — CSV requis
         # ============================================================
         try:
             gym_path = os.path.join(data_dir, "gym_members_exercise_tracking.csv")
+            if not os.path.isfile(gym_path):
+                logger.error(
+                    "❌ [3/4] Fichier manquant : %s — pas d’utilisateurs / mesures « gym » sans ce CSV. Même remède : `python etl/download_data.py`.",
+                    gym_path,
+                )
+                raise FileNotFoundError(gym_path)
             logger.info("\n📥 [3/4] Extraction utilisateurs (Gym Members Exercise Dataset)...")
             df_gym = extract_from_csv(gym_path)
 
@@ -131,10 +146,16 @@ def run_etl_pipeline():
             logger.error(f"❌ Erreur gym members : {str(e)}", exc_info=True)
 
         # ============================================================
-        # 4. UTILISATEURS — Diet Recommendations Dataset (Kaggle)
+        # 4. UTILISATEURS — Diet Recommendations Dataset (Kaggle) — CSV requis
         # ============================================================
         try:
             diet_path = os.path.join(data_dir, "diet_recommendations_dataset.csv")
+            if not os.path.isfile(diet_path):
+                logger.error(
+                    "❌ [4/4] Fichier manquant : %s — pas d’utilisateurs « diet » sans ce CSV. Même remède : `python etl/download_data.py`.",
+                    diet_path,
+                )
+                raise FileNotFoundError(diet_path)
             logger.info("\n📥 [4/4] Extraction utilisateurs (Diet Recommendations Dataset)...")
             df_diet = extract_from_csv(diet_path)
 

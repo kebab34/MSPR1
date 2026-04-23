@@ -293,8 +293,11 @@ def transform_gym_members_to_utilisateurs(df: pd.DataFrame) -> pd.DataFrame:
     Colonnes source : Age, Gender, Weight (kg), Height (m), Max_BPM, Avg_BPM,
                       Resting_BPM, Session_Duration (hours), Calories_Burned,
                       Workout_Type, Fat_Percentage, BMI, Experience_Level
+    Dataset (973 lignes) : https://www.kaggle.com/datasets/valakhorasani/gym-members-exercise-dataset
     """
     try:
+        df = df.copy()
+        df.columns = df.columns.str.strip()
         result = pd.DataFrame()
         # Générer des emails uniques reproductibles (évite les doublons lors d'upsert)
         result['email'] = [f"gym.member.{i:04d}@healthai.com" for i in range(len(df))]
@@ -313,6 +316,7 @@ def transform_gym_members_to_utilisateurs(df: pd.DataFrame) -> pd.DataFrame:
         result['objectifs'] = df['Workout_Type'].apply(
             lambda x: [f"Entraînement: {x}"] if pd.notna(x) else ['fitness']
         )
+        result['app_role'] = 'user'
         result = result.where(pd.notna(result), None)
         logger.info(f"Transformed {len(result)} utilisateurs from gym members dataset")
         return result
@@ -327,6 +331,8 @@ def transform_gym_members_to_mesures(df: pd.DataFrame, email_to_id: dict) -> pd.
     Requires email_to_id dict {email: uuid} to link mesures to utilisateurs.
     """
     try:
+        df = df.copy()
+        df.columns = df.columns.str.strip()
         result = pd.DataFrame()
         emails = [f"gym.member.{i:04d}@healthai.com" for i in range(len(df))]
         result['id_utilisateur'] = [email_to_id.get(e) for e in emails]
@@ -351,6 +357,8 @@ def transform_diet_reco_to_utilisateurs(df: pd.DataFrame) -> pd.DataFrame:
                       Disease_Type, Severity, Diet_Recommendation, ...
     """
     try:
+        df = df.copy()
+        df.columns = df.columns.str.strip()
         result = pd.DataFrame()
         result['email'] = df['Patient_ID'].astype(str).str.lower().apply(
             lambda x: f"{x}@healthai.com"
@@ -370,6 +378,7 @@ def transform_diet_reco_to_utilisateurs(df: pd.DataFrame) -> pd.DataFrame:
             lambda row: [str(row['Diet_Recommendation'])] if pd.notna(row.get('Diet_Recommendation')) else ['santé'],
             axis=1
         )
+        result['app_role'] = 'user'
         result = result.dropna(subset=['email'])
         result = result.where(pd.notna(result), None)
         logger.info(f"Transformed {len(result)} utilisateurs from diet recommendations dataset")
@@ -454,4 +463,3 @@ def transform_foods_from_csv(df: pd.DataFrame) -> pd.DataFrame:
     except Exception as e:
         logger.error(f"Error transforming foods: {str(e)}")
         raise
-

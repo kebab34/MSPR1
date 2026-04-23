@@ -8,7 +8,7 @@ from uuid import UUID
 from datetime import date
 from app.core.database import supabase_admin
 from app.schemas.session import SessionSportCreate, SessionSportUpdate, SessionSportRead
-from app.api.v1.deps import get_current_user
+from app.api.v1.deps import get_current_profile
 
 router = APIRouter()
 
@@ -20,12 +20,13 @@ async def get_sessions(
     date_fin: Optional[date] = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    _u: dict = Depends(get_current_user),
+    current: dict = Depends(get_current_profile),
 ):
-    """Récupérer la liste des sessions sport"""
     try:
+        if current["app_role"] != "admin":
+            utilisateur_id = UUID(current["id_utilisateur"])
+
         query = supabase_admin.table("sessions_sport").select("*")
-        
         if utilisateur_id:
             query = query.eq("id_utilisateur", str(utilisateur_id))
         if date_debut:
@@ -35,20 +36,22 @@ async def get_sessions(
 
         result = query.range(skip, skip + limit - 1).order("date_session", desc=True).execute()
         return result.data
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération: {str(e)}")
 
 
 @router.get("/{session_id}", response_model=SessionSportRead)
-async def get_session(session_id: UUID, _u: dict = Depends(get_current_user)):
-    """Récupérer une session par son ID"""
+async def get_session(session_id: UUID, current: dict = Depends(get_current_profile)):
     try:
         result = supabase_admin.table("sessions_sport").select("*").eq("id_session", str(session_id)).execute()
-        
         if not result.data:
             raise HTTPException(status_code=404, detail="Session non trouvée")
-        
-        return result.data[0]
+        row = result.data[0]
+        if current["app_role"] != "admin" and str(row["id_utilisateur"]) != current["id_utilisateur"]:
+            raise HTTPException(status_code=403, detail="Accès refusé")
+        return row
     except HTTPException:
         raise
     except Exception as e:
@@ -56,29 +59,24 @@ async def get_session(session_id: UUID, _u: dict = Depends(get_current_user)):
 
 
 @router.post("", response_model=SessionSportRead, status_code=201)
-async def create_session(session: SessionSportCreate, _: dict = Depends(get_current_user)):
-    """Créer une nouvelle session sport"""
+async def create_session(session: SessionSportCreate, current: dict = Depends(get_current_profile)):
     try:
-        # Extraire les exercices si présents
-        exercices = session.exercices if hasattr(session, 'exercices') else []
-        session_data = session.model_dump(exclude={'exercices'})
-        
-        # Créer la session
+        exercices = session.exercices if hasattr(session, "exercices") else []
+        session_data = session.model_dump(mode="json", exclude={"exercices"})
+        if current["app_role"] != "admin":
+            session_data["id_utilisateur"] = current["id_utilisateur"]
+
         result = supabase_admin.table("sessions_sport").insert(session_data).execute()
-        
         if not result.data:
             raise HTTPException(status_code=400, detail="Erreur lors de la création de la session")
-        
+
         session_id = result.data[0]["id_session"]
-        
-        # Ajouter les exercices si présents
         if exercices:
             for exercice in exercices:
-                exercice_data = exercice.model_dump()
+                exercice_data = exercice.model_dump(mode="json")
                 exercice_data["id_session"] = session_id
                 supabase_admin.table("session_exercices").insert(exercice_data).execute()
-        
-        # Récupérer la session complète
+
         result = supabase_admin.table("sessions_sport").select("*").eq("id_session", session_id).execute()
         return result.data[0]
     except HTTPException:
@@ -88,19 +86,21 @@ async def create_session(session: SessionSportCreate, _: dict = Depends(get_curr
 
 
 @router.put("/{session_id}", response_model=SessionSportRead)
-async def update_session(session_id: UUID, session: SessionSportUpdate, _: dict = Depends(get_current_user)):
-    """Mettre à jour une session sport"""
+async def update_session(session_id: UUID, session: SessionSportUpdate, current: dict = Depends(get_current_profile)):
     try:
-        data = session.model_dump(exclude_unset=True)
-        
+        existing = supabase_admin.table("sessions_sport").select("id_utilisateur").eq("id_session", str(session_id)).execute()
+        if not existing.data:
+            raise HTTPException(status_code=404, detail="Session non trouvée")
+        if current["app_role"] != "admin" and str(existing.data[0]["id_utilisateur"]) != current["id_utilisateur"]:
+            raise HTTPException(status_code=403, detail="Accès refusé")
+
+        data = session.model_dump(mode="json", exclude_unset=True)
         if not data:
             raise HTTPException(status_code=400, detail="Aucune donnée à mettre à jour")
-        
+
         result = supabase_admin.table("sessions_sport").update(data).eq("id_session", str(session_id)).execute()
-        
         if not result.data:
             raise HTTPException(status_code=404, detail="Session non trouvée")
-        
         return result.data[0]
     except HTTPException:
         raise
@@ -109,18 +109,17 @@ async def update_session(session_id: UUID, session: SessionSportUpdate, _: dict 
 
 
 @router.delete("/{session_id}", status_code=204)
-async def delete_session(session_id: UUID, _: dict = Depends(get_current_user)):
-    """Supprimer une session sport"""
+async def delete_session(session_id: UUID, current: dict = Depends(get_current_profile)):
     try:
-        result = supabase_admin.table("sessions_sport").delete().eq("id_session", str(session_id)).execute()
-        
-        if not result.data:
+        existing = supabase_admin.table("sessions_sport").select("id_utilisateur").eq("id_session", str(session_id)).execute()
+        if not existing.data:
             raise HTTPException(status_code=404, detail="Session non trouvée")
-        
+        if current["app_role"] != "admin" and str(existing.data[0]["id_utilisateur"]) != current["id_utilisateur"]:
+            raise HTTPException(status_code=403, detail="Accès refusé")
+
+        supabase_admin.table("sessions_sport").delete().eq("id_session", str(session_id)).execute()
         return None
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression: {str(e)}")
-
-

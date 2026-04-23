@@ -3,15 +3,10 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { apiFetch } from "@/lib/api";
+import { Btn, Card, Input, Select, PageHeader, Alert, Badge } from "@/components/ui";
+import { IconUser, IconShield, IconStar, IconCheck, IconAlertCircle } from "@/components/icons";
 
-const OBJECTIFS = [
-  "perte de poids",
-  "musculation",
-  "forme",
-  "cardio",
-  "flexibilité",
-  "endurance",
-];
+const OBJECTIFS = ["Perte de poids", "Musculation", "Cardio", "Flexibilité", "Endurance", "Forme générale"];
 
 export default function ProfilPage() {
   const { token, profile, refreshProfile } = useAuth();
@@ -32,22 +27,12 @@ export default function ProfilPage() {
     if (!profile) return;
     setPrenom(profile.prenom ?? "");
     setNom(profile.nom ?? "");
-    setAge(profile.age != null && profile.age > 0 ? String(profile.age) : "");
+    setAge(profile.age && profile.age > 0 ? String(profile.age) : "");
     setSexe(profile.sexe ?? "");
-    setPoids(
-      profile.poids != null && profile.poids > 0 ? String(profile.poids) : "",
-    );
-    setTaille(
-      profile.taille != null && profile.taille > 0
-        ? String(profile.taille)
-        : "",
-    );
-    setObjectifs(
-      Array.isArray(profile.objectifs) ? [...profile.objectifs] : [],
-    );
-    setPremium(
-      (profile.type_abonnement ?? "freemium").toLowerCase() === "premium",
-    );
+    setPoids(profile.poids && profile.poids > 0 ? String(profile.poids) : "");
+    setTaille(profile.taille && profile.taille > 0 ? String(profile.taille) : "");
+    setObjectifs(Array.isArray(profile.objectifs) ? [...profile.objectifs] : []);
+    setPremium((profile.type_abonnement ?? "freemium").toLowerCase() === "premium");
   }, [profile]);
 
   async function onSubmit(e: React.FormEvent) {
@@ -70,13 +55,9 @@ export default function ProfilPage() {
       taille: !Number.isNaN(tailleN) && tailleN > 0 ? tailleN : null,
     };
     try {
-      await apiFetch("/auth/me", {
-        method: "PATCH",
-        body: JSON.stringify(payload),
-        token,
-      });
+      await apiFetch("/auth/me", { method: "PATCH", body: payload, token });
       await refreshProfile();
-      setMsg("Profil enregistré.");
+      setMsg("Profil enregistré avec succès.");
     } catch (ex) {
       setErr(ex instanceof Error ? ex.message : String(ex));
     } finally {
@@ -85,148 +66,122 @@ export default function ProfilPage() {
   }
 
   function toggleObjectif(o: string) {
-    setObjectifs((prev) =>
-      prev.includes(o) ? prev.filter((x) => x !== o) : [...prev, o],
-    );
+    setObjectifs((prev) => prev.includes(o) ? prev.filter((x) => x !== o) : [...prev, o]);
   }
 
+  const initials = [prenom, nom].filter(Boolean).map((s) => s[0]).join("").toUpperCase() || (profile?.email ?? "?").slice(0, 2).toUpperCase();
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">🙋 Mon profil</h1>
-        <p className="text-zinc-500 text-sm mt-1">
-          Mise à jour via <code className="text-zinc-400">PATCH /api/v1/auth/me</code>
-        </p>
-      </div>
+    <div className="max-w-2xl space-y-6">
+      <PageHeader
+        title="Mon profil"
+        subtitle="Gérez vos informations personnelles et vos préférences."
+      />
 
       {msg && (
-        <div className="text-sm text-emerald-400 bg-emerald-950/30 border border-emerald-900/50 rounded-lg px-3 py-2">
-          {msg}
-        </div>
+        <Alert variant="success">
+          <IconCheck size={15} className="shrink-0 mt-0.5" />
+          <span>{msg}</span>
+        </Alert>
       )}
       {err && (
-        <div className="text-sm text-red-400 bg-red-950/30 border border-red-900/50 rounded-lg px-3 py-2">
-          {err}
-        </div>
+        <Alert variant="error">
+          <IconAlertCircle size={15} className="shrink-0 mt-0.5" />
+          <span>{err}</span>
+        </Alert>
       )}
 
-      <form onSubmit={onSubmit} className="space-y-6 max-w-2xl">
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 space-y-4">
-          <h2 className="text-white font-medium">Informations personnelles</h2>
+      {/* Avatar + role */}
+      <Card>
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-blue-600/20 border-2 border-blue-500/30 flex items-center justify-center shrink-0">
+            <span className="text-lg font-semibold text-blue-400">{initials}</span>
+          </div>
           <div>
-            <label className="text-xs text-zinc-500">Email (lecture seule)</label>
-            <input
-              disabled
-              className="mt-1 w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-zinc-500"
-              value={profile?.email ?? ""}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs text-zinc-500">Prénom</label>
-              <input
-                className="mt-1 w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-white"
-                value={prenom}
-                onChange={(e) => setPrenom(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-xs text-zinc-500">Nom</label>
-              <input
-                className="mt-1 w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-white"
-                value={nom}
-                onChange={(e) => setNom(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs text-zinc-500">Âge (0 = non renseigné)</label>
-              <input
-                type="number"
-                min={0}
-                className="mt-1 w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-white"
-                value={age}
-                onChange={(e) => setAge(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-xs text-zinc-500">Sexe</label>
-              <select
-                className="mt-1 w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-white"
-                value={sexe}
-                onChange={(e) => setSexe(e.target.value)}
-              >
-                <option value="">(non indiqué)</option>
-                <option value="M">M</option>
-                <option value="F">F</option>
-                <option value="Autre">Autre</option>
-              </select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs text-zinc-500">Poids (kg)</label>
-              <input
-                type="number"
-                step="0.1"
-                className="mt-1 w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-white"
-                value={poids}
-                onChange={(e) => setPoids(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-xs text-zinc-500">Taille (cm)</label>
-              <input
-                type="number"
-                step="0.1"
-                className="mt-1 w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-white"
-                value={taille}
-                onChange={(e) => setTaille(e.target.value)}
-              />
+            <p className="font-medium text-white">{[prenom, nom].filter(Boolean).join(" ") || "Utilisateur"}</p>
+            <p className="text-sm text-slate-400">{profile?.email}</p>
+            <div className="flex items-center gap-2 mt-1.5">
+              {profile?.app_role === "admin" ? (
+                <Badge variant="amber"><IconShield size={10} /> Administrateur</Badge>
+              ) : (
+                <Badge variant="slate"><IconUser size={10} /> Utilisateur</Badge>
+              )}
+              {profile?.type_abonnement === "premium" ? (
+                <Badge variant="purple"><IconStar size={10} /> Premium</Badge>
+              ) : (
+                <Badge variant="slate">Freemium</Badge>
+              )}
             </div>
           </div>
         </div>
+      </Card>
 
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 space-y-3">
-          <h2 className="text-white font-medium">Objectifs</h2>
+      <form onSubmit={onSubmit} className="space-y-4">
+        {/* Personal info */}
+        <Card>
+          <h2 className="text-sm font-semibold text-white mb-4">Informations personnelles</h2>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <Input label="Prénom" value={prenom} onChange={(e) => setPrenom(e.target.value)} placeholder="Jean" />
+              <Input label="Nom" value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Dupont" />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <Input label="Âge" type="number" min={0} max={120} value={age} onChange={(e) => setAge(e.target.value)} placeholder="25" />
+              <Input label="Poids (kg)" type="number" step="0.1" min={0} value={poids} onChange={(e) => setPoids(e.target.value)} placeholder="70" />
+              <Input label="Taille (cm)" type="number" step="0.1" min={0} value={taille} onChange={(e) => setTaille(e.target.value)} placeholder="175" />
+            </div>
+            <Select label="Sexe" value={sexe} onChange={(e) => setSexe(e.target.value)}>
+              <option value="">Non renseigné</option>
+              <option value="M">Homme</option>
+              <option value="F">Femme</option>
+              <option value="Autre">Autre</option>
+            </Select>
+          </div>
+        </Card>
+
+        {/* Goals */}
+        <Card>
+          <h2 className="text-sm font-semibold text-white mb-4">Objectifs</h2>
           <div className="flex flex-wrap gap-2">
-            {OBJECTIFS.map((o) => (
-              <button
-                key={o}
-                type="button"
-                onClick={() => toggleObjectif(o)}
-                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                  objectifs.includes(o)
-                    ? "bg-violet-600/30 border-violet-500 text-violet-200"
-                    : "border-zinc-700 text-zinc-400 hover:border-zinc-600"
-                }`}
-              >
-                {o}
-              </button>
-            ))}
+            {OBJECTIFS.map((o) => {
+              const selected = objectifs.includes(o);
+              return (
+                <button
+                  key={o}
+                  type="button"
+                  onClick={() => toggleObjectif(o)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
+                    selected
+                      ? "bg-blue-600/20 border-blue-500/40 text-blue-300"
+                      : "border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
+                  }`}
+                >
+                  {selected && "✓ "}{o}
+                </button>
+              );
+            })}
           </div>
-        </div>
+        </Card>
 
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 space-y-3">
-          <h2 className="text-white font-medium">Formule</h2>
-          <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={premium}
-              onChange={(e) => setPremium(e.target.checked)}
-            />
-            Premium (démo — pas de paiement)
+        {/* Subscription */}
+        <Card>
+          <h2 className="text-sm font-semibold text-white mb-4">Abonnement</h2>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <div className="relative">
+              <input type="checkbox" className="sr-only" checked={premium} onChange={(e) => setPremium(e.target.checked)} />
+              <div className={`w-10 h-5.5 rounded-full transition-colors ${premium ? "bg-blue-600" : "bg-slate-700"}`} style={{ height: "22px" }} />
+              <div className={`absolute top-0.5 left-0.5 w-4.5 h-4.5 bg-white rounded-full shadow transition-transform ${premium ? "translate-x-4.5" : ""}`} style={{ width: "18px", height: "18px", transform: premium ? "translateX(18px)" : "none" }} />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-200">Compte Premium</p>
+              <p className="text-xs text-slate-500">Accès à toutes les fonctionnalités avancées</p>
+            </div>
           </label>
-        </div>
+        </Card>
 
-        <button
-          type="submit"
-          disabled={saving}
-          className="rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 px-6 py-2.5 text-sm font-medium text-white"
-        >
-          {saving ? "Enregistrement…" : "Enregistrer"}
-        </button>
+        <Btn type="submit" loading={saving} size="md">
+          Enregistrer les modifications
+        </Btn>
       </form>
     </div>
   );

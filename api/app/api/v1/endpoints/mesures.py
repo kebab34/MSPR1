@@ -8,7 +8,7 @@ from uuid import UUID
 from datetime import date
 from app.core.database import supabase_admin
 from app.schemas.mesure import MesureBiometriqueCreate, MesureBiometriqueUpdate, MesureBiometriqueRead
-from app.api.v1.deps import get_current_user
+from app.api.v1.deps import get_current_profile
 
 router = APIRouter()
 
@@ -20,12 +20,13 @@ async def get_mesures(
     date_fin: Optional[date] = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    _u: dict = Depends(get_current_user),
+    current: dict = Depends(get_current_profile),
 ):
-    """Récupérer la liste des mesures biométriques"""
     try:
+        if current["app_role"] != "admin":
+            utilisateur_id = UUID(current["id_utilisateur"])
+
         query = supabase_admin.table("mesures_biometriques").select("*")
-        
         if utilisateur_id:
             query = query.eq("id_utilisateur", str(utilisateur_id))
         if date_debut:
@@ -35,20 +36,22 @@ async def get_mesures(
 
         result = query.range(skip, skip + limit - 1).order("date_mesure", desc=True).execute()
         return result.data
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération: {str(e)}")
 
 
 @router.get("/{mesure_id}", response_model=MesureBiometriqueRead)
-async def get_mesure(mesure_id: UUID, _u: dict = Depends(get_current_user)):
-    """Récupérer une mesure biométrique par son ID"""
+async def get_mesure(mesure_id: UUID, current: dict = Depends(get_current_profile)):
     try:
         result = supabase_admin.table("mesures_biometriques").select("*").eq("id_mesure", str(mesure_id)).execute()
-        
         if not result.data:
             raise HTTPException(status_code=404, detail="Mesure biométrique non trouvée")
-        
-        return result.data[0]
+        row = result.data[0]
+        if current["app_role"] != "admin" and str(row["id_utilisateur"]) != current["id_utilisateur"]:
+            raise HTTPException(status_code=403, detail="Accès refusé")
+        return row
     except HTTPException:
         raise
     except Exception as e:
@@ -56,34 +59,37 @@ async def get_mesure(mesure_id: UUID, _u: dict = Depends(get_current_user)):
 
 
 @router.post("", response_model=MesureBiometriqueRead, status_code=201)
-async def create_mesure(mesure: MesureBiometriqueCreate, _: dict = Depends(get_current_user)):
-    """Créer une nouvelle mesure biométrique"""
+async def create_mesure(mesure: MesureBiometriqueCreate, current: dict = Depends(get_current_profile)):
     try:
-        data = mesure.model_dump()
+        data = mesure.model_dump(mode="json")
+        if current["app_role"] != "admin":
+            data["id_utilisateur"] = current["id_utilisateur"]
         result = supabase_admin.table("mesures_biometriques").insert(data).execute()
-        
         if not result.data:
             raise HTTPException(status_code=400, detail="Erreur lors de la création")
-        
         return result.data[0]
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création: {str(e)}")
 
 
 @router.put("/{mesure_id}", response_model=MesureBiometriqueRead)
-async def update_mesure(mesure_id: UUID, mesure: MesureBiometriqueUpdate, _: dict = Depends(get_current_user)):
-    """Mettre à jour une mesure biométrique"""
+async def update_mesure(mesure_id: UUID, mesure: MesureBiometriqueUpdate, current: dict = Depends(get_current_profile)):
     try:
-        data = mesure.model_dump(exclude_unset=True)
-        
+        existing = supabase_admin.table("mesures_biometriques").select("id_utilisateur").eq("id_mesure", str(mesure_id)).execute()
+        if not existing.data:
+            raise HTTPException(status_code=404, detail="Mesure biométrique non trouvée")
+        if current["app_role"] != "admin" and str(existing.data[0]["id_utilisateur"]) != current["id_utilisateur"]:
+            raise HTTPException(status_code=403, detail="Accès refusé")
+
+        data = mesure.model_dump(mode="json", exclude_unset=True)
         if not data:
             raise HTTPException(status_code=400, detail="Aucune donnée à mettre à jour")
-        
+
         result = supabase_admin.table("mesures_biometriques").update(data).eq("id_mesure", str(mesure_id)).execute()
-        
         if not result.data:
             raise HTTPException(status_code=404, detail="Mesure biométrique non trouvée")
-        
         return result.data[0]
     except HTTPException:
         raise
@@ -92,18 +98,17 @@ async def update_mesure(mesure_id: UUID, mesure: MesureBiometriqueUpdate, _: dic
 
 
 @router.delete("/{mesure_id}", status_code=204)
-async def delete_mesure(mesure_id: UUID, _: dict = Depends(get_current_user)):
-    """Supprimer une mesure biométrique"""
+async def delete_mesure(mesure_id: UUID, current: dict = Depends(get_current_profile)):
     try:
-        result = supabase_admin.table("mesures_biometriques").delete().eq("id_mesure", str(mesure_id)).execute()
-        
-        if not result.data:
+        existing = supabase_admin.table("mesures_biometriques").select("id_utilisateur").eq("id_mesure", str(mesure_id)).execute()
+        if not existing.data:
             raise HTTPException(status_code=404, detail="Mesure biométrique non trouvée")
-        
+        if current["app_role"] != "admin" and str(existing.data[0]["id_utilisateur"]) != current["id_utilisateur"]:
+            raise HTTPException(status_code=403, detail="Accès refusé")
+
+        supabase_admin.table("mesures_biometriques").delete().eq("id_mesure", str(mesure_id)).execute()
         return None
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression: {str(e)}")
-
-

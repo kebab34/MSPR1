@@ -44,6 +44,28 @@ async def require_admin(user: dict = Depends(get_current_user)) -> dict:
     return {**user, "profile": prof}
 
 
+async def get_current_profile(user: dict = Depends(get_current_user)) -> dict:
+    """Authenticated user enriched with id_utilisateur and app_role from DB."""
+    prof = fetch_app_profile(user["id"], user.get("email", ""))
+    if not prof:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Aucun profil métier lié à ce compte.",
+        )
+    prof = apply_admin_bootstrap(user.get("email", ""), prof, get_admin_email_set())
+    id_utilisateur = str(prof.get("id_utilisateur") or "")
+    if not id_utilisateur:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Profil incomplet (id_utilisateur manquant).",
+        )
+    return {
+        **user,
+        "id_utilisateur": id_utilisateur,
+        "app_role": str(prof.get("app_role", "user")),
+    }
+
+
 async def require_user(user: dict = Depends(get_current_user)) -> dict:
     """Toute ressource connectée (user ou admin)."""
     return user

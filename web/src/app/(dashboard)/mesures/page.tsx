@@ -3,216 +3,243 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { apiFetch } from "@/lib/api";
-import {
-  fetchUsersForPicker,
-  labelUser,
-  type PickUser,
-} from "@/lib/picker-users";
-import { JsonTable } from "@/components/json-table";
+import { fetchUsersForPicker, labelUser, type PickUser } from "@/lib/picker-users";
+import { PageHeader, Btn, Card, Input, Select, Alert, SkeletonTable, EmptyState, StatCard } from "@/components/ui";
+import { IconActivity, IconPlus, IconAlertCircle, IconCheck, IconHeart, IconFlame, IconMoon } from "@/components/icons";
 
-type Row = Record<string, unknown>;
+type Mesure = {
+  id_mesure: string;
+  id_utilisateur: string;
+  poids?: number;
+  frequence_cardiaque?: number;
+  sommeil?: number;
+  calories_brulees?: number;
+  date_mesure: string;
+};
+
+function fmt(iso?: string) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function diff(current?: number, prev?: number): string | null {
+  if (current == null || prev == null) return null;
+  const d = current - prev;
+  if (d === 0) return null;
+  return (d > 0 ? "+" : "") + d.toFixed(1);
+}
 
 export default function MesuresPage() {
   const { token, profile } = useAuth();
   const [users, setUsers] = useState<PickUser[]>([]);
   const [userId, setUserId] = useState("");
-  const [rows, setRows] = useState<Row[]>([]);
+  const [rows, setRows] = useState<Mesure[]>([]);
+  const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const [poids, setPoids] = useState("70");
-  const [fc, setFc] = useState("70");
-  const [sommeil, setSommeil] = useState("7");
-  const [calories, setCalories] = useState("0");
+  const [poids, setPoids] = useState("");
+  const [fc, setFc] = useState("");
+  const [sommeil, setSommeil] = useState("");
+  const [calories, setCalories] = useState("");
 
   useEffect(() => {
     if (!token || !profile) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const u = await fetchUsersForPicker(token, profile);
-        if (cancelled) return;
-        setUsers(u);
-      } catch (e) {
-        if (!cancelled) setErr(e instanceof Error ? e.message : String(e));
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    fetchUsersForPicker(token, profile).then(setUsers).catch(() => {});
   }, [token, profile]);
 
   useEffect(() => {
     if (users.length && !userId) setUserId(users[0].id_utilisateur);
   }, [users, userId]);
 
-  const loadMesures = useCallback(
-    async (uid: string) => {
-      if (!token || !uid) return;
-      const data = await apiFetch<Row[]>("/mesures", {
-        token,
-        params: { utilisateur_id: uid, limit: 200 },
-      });
-      setRows(Array.isArray(data) ? data : []);
-    },
-    [token],
-  );
+  const loadMesures = useCallback(async (uid: string) => {
+    if (!token || !uid) return;
+    setLoading(true);
+    const data = await apiFetch<Mesure[]>("/mesures", { token, params: { utilisateur_id: uid, limit: "200" } });
+    setRows(Array.isArray(data) ? data.sort((a, b) => b.date_mesure.localeCompare(a.date_mesure)) : []);
+    setLoading(false);
+  }, [token]);
 
   useEffect(() => {
     if (!token || !userId) return;
     let cancelled = false;
-    (async () => {
-      try {
-        await loadMesures(userId);
-      } catch (e) {
-        if (!cancelled) setErr(e instanceof Error ? e.message : String(e));
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    loadMesures(userId).catch((e) => { if (!cancelled) setErr(String(e)); });
+    return () => { cancelled = true; };
   }, [token, userId, loadMesures]);
 
   async function onAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!token || !userId) return;
-    setErr(null);
-    setMsg(null);
+    setErr(null); setMsg(null); setSaving(true);
     try {
-      const p = parseFloat(poids);
-      const f = parseInt(fc, 10);
-      const s = parseFloat(sommeil);
-      const c = parseFloat(calories);
+      const p = parseFloat(poids); const f = parseInt(fc, 10);
+      const s = parseFloat(sommeil); const c = parseFloat(calories);
       await apiFetch("/mesures", {
-        method: "POST",
-        token,
-        body: JSON.stringify({
+        method: "POST", token,
+        body: {
           id_utilisateur: userId,
           poids: p > 0 ? p : null,
           frequence_cardiaque: f > 0 ? f : null,
           sommeil: s > 0 ? s : null,
           calories_brulees: c > 0 ? c : null,
-        }),
+        },
       });
       setMsg("Mesure enregistrée.");
+      setShowForm(false);
+      setPoids(""); setFc(""); setSommeil(""); setCalories("");
       await loadMesures(userId);
     } catch (ex) {
       setErr(ex instanceof Error ? ex.message : String(ex));
+    } finally {
+      setSaving(false);
     }
   }
 
-  if (!users.length) {
-    return (
-      <div className="text-zinc-500">Aucun utilisateur pour les mesures.</div>
-    );
-  }
-
-  const cols = [
-    "date_mesure",
-    "poids",
-    "frequence_cardiaque",
-    "sommeil",
-    "calories_brulees",
-  ];
-
-  const sorted = [...rows].sort((a, b) => {
-    const da = String(a.date_mesure ?? "");
-    const db = String(b.date_mesure ?? "");
-    return db.localeCompare(da);
-  });
-  const derniere = sorted[0];
+  const latest = rows[0];
+  const prev = rows[1];
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-white">📊 Mesures biométriques</h1>
-      {err && <p className="text-sm text-red-400">{err}</p>}
-      {msg && <p className="text-sm text-emerald-400">{msg}</p>}
+    <div className="space-y-6">
+      <PageHeader
+        title="Mesures biométriques"
+        subtitle="Suivez l'évolution de vos indicateurs de santé"
+        action={
+          <Btn size="sm" onClick={() => setShowForm(!showForm)}>
+            <IconPlus size={14} /> Nouvelle mesure
+          </Btn>
+        }
+      />
 
-      <div>
-        <label className="text-xs text-zinc-500 block mb-1">Utilisateur</label>
-        <select
-          className="rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-white min-w-[240px]"
-          value={userId}
-          onChange={(e) => setUserId(e.target.value)}
-        >
-          {users.map((u) => (
-            <option key={u.id_utilisateur} value={u.id_utilisateur}>
-              {labelUser(u)}
-            </option>
-          ))}
-        </select>
-      </div>
+      {msg && <Alert variant="success"><IconCheck size={14} /><span>{msg}</span></Alert>}
+      {err && <Alert variant="error"><IconAlertCircle size={14} /><span>{err}</span></Alert>}
 
-      {derniere && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {(
-            [
-              ["Poids (kg)", derniere.poids],
-              ["FC (bpm)", derniere.frequence_cardiaque],
-              ["Sommeil (h)", derniere.sommeil],
-              ["Calories", derniere.calories_brulees],
-            ] as [string, unknown][]
-          ).map(([label, val]) => (
-            <div
-              key={label}
-              className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4"
-            >
-              <div className="text-xs text-zinc-500">{label}</div>
-              <div className="text-lg font-semibold text-white">
-                {val != null ? String(val) : "—"}
-              </div>
-            </div>
-          ))}
+      {users.length > 1 && (
+        <Select value={userId} onChange={(e) => setUserId(e.target.value)} className="max-w-xs">
+          {users.map((u) => <option key={u.id_utilisateur} value={u.id_utilisateur}>{labelUser(u)}</option>)}
+        </Select>
+      )}
+
+      {latest && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <StatCard
+            label="Poids"
+            value={latest.poids != null ? `${latest.poids} kg` : "—"}
+            icon={<IconActivity size={18} />}
+            color="blue"
+            sub={diff(latest.poids, prev?.poids) ? `${diff(latest.poids, prev?.poids)} kg vs précédent` : `Dernière : ${fmt(latest.date_mesure)}`}
+          />
+          <StatCard
+            label="Fréq. cardiaque"
+            value={latest.frequence_cardiaque != null ? `${latest.frequence_cardiaque} bpm` : "—"}
+            icon={<IconHeart size={18} />}
+            color="cyan"
+            sub={diff(latest.frequence_cardiaque, prev?.frequence_cardiaque) ?? ""}
+          />
+          <StatCard
+            label="Sommeil"
+            value={latest.sommeil != null ? `${latest.sommeil} h` : "—"}
+            icon={<IconMoon size={18} />}
+            color="purple"
+            sub={diff(latest.sommeil, prev?.sommeil) ?? ""}
+          />
+          <StatCard
+            label="Calories brûlées"
+            value={latest.calories_brulees != null ? `${latest.calories_brulees}` : "—"}
+            icon={<IconFlame size={18} />}
+            color="amber"
+            sub="kcal"
+          />
         </div>
       )}
 
-      <JsonTable
-        rows={sorted}
-        columns={cols}
-        emptyMessage="Aucune mesure pour cet utilisateur"
-      />
+      {showForm && (
+        <Card>
+          <h2 className="text-sm font-semibold text-white mb-4">Nouvelle mesure</h2>
+          <form onSubmit={onAdd} className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Input label="Poids (kg)" type="number" step="0.1" min="0" value={poids} onChange={(e) => setPoids(e.target.value)} placeholder="70.5" />
+            <Input label="Fréq. cardiaque (bpm)" type="number" min="0" value={fc} onChange={(e) => setFc(e.target.value)} placeholder="72" />
+            <Input label="Sommeil (h)" type="number" step="0.5" min="0" value={sommeil} onChange={(e) => setSommeil(e.target.value)} placeholder="7.5" />
+            <Input label="Calories brûlées" type="number" min="0" value={calories} onChange={(e) => setCalories(e.target.value)} placeholder="500" />
+            <div className="col-span-2 sm:col-span-4 flex gap-2">
+              <Btn type="submit" loading={saving} size="sm">Enregistrer</Btn>
+              <Btn type="button" variant="ghost" size="sm" onClick={() => setShowForm(false)}>Annuler</Btn>
+            </div>
+          </form>
+        </Card>
+      )}
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 max-w-xl space-y-3">
-        <h2 className="text-white font-medium text-sm">Nouvelle mesure</h2>
-        <form onSubmit={onAdd} className="grid grid-cols-2 gap-2">
-          <input
-            type="number"
-            step="0.1"
-            placeholder="Poids kg"
-            className="rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-white"
-            value={poids}
-            onChange={(e) => setPoids(e.target.value)}
+      <div>
+        <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wide mb-3">Historique</h2>
+        {loading ? <SkeletonTable rows={5} cols={5} /> : rows.length === 0 ? (
+          <EmptyState
+            message="Aucune mesure enregistrée."
+            action={<Btn size="sm" onClick={() => setShowForm(true)}><IconPlus size={14} /> Ajouter</Btn>}
           />
-          <input
-            type="number"
-            placeholder="Fréq. cardiaque"
-            className="rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-white"
-            value={fc}
-            onChange={(e) => setFc(e.target.value)}
-          />
-          <input
-            type="number"
-            step="0.5"
-            placeholder="Sommeil h"
-            className="rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-white"
-            value={sommeil}
-            onChange={(e) => setSommeil(e.target.value)}
-          />
-          <input
-            type="number"
-            step="1"
-            placeholder="Calories brûlées"
-            className="rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-white"
-            value={calories}
-            onChange={(e) => setCalories(e.target.value)}
-          />
-          <button
-            type="submit"
-            className="col-span-2 rounded-lg bg-violet-600 hover:bg-violet-500 px-4 py-2 text-sm text-white"
-          >
-            Enregistrer
-          </button>
-        </form>
+        ) : (
+          <div className="overflow-x-auto rounded-xl border border-slate-800">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-slate-800/50 border-b border-slate-800">
+                  {["Date", "Poids", "Fréq. cardiaque", "Sommeil", "Calories brûlées"].map((h) => (
+                    <th key={h} className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase tracking-wide">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((m, i) => {
+                  const p = rows[i + 1];
+                  return (
+                    <tr key={m.id_mesure} className="border-b border-slate-800/60 hover:bg-slate-800/30 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center shrink-0">
+                            <IconActivity size={12} className="text-slate-400" />
+                          </div>
+                          <span className="text-slate-200">{fmt(m.date_mesure)}</span>
+                          {i === 0 && <span className="text-[10px] text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded-full">Dernière</span>}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        {m.poids != null ? (
+                          <span>
+                            <span className="font-medium text-white">{m.poids}</span>
+                            <span className="text-slate-500 text-xs"> kg</span>
+                            {diff(m.poids, p?.poids) && (
+                              <span className={`ml-1.5 text-xs ${Number(diff(m.poids, p?.poids)) > 0 ? "text-red-400" : "text-emerald-400"}`}>
+                                {diff(m.poids, p?.poids)}
+                              </span>
+                            )}
+                          </span>
+                        ) : <span className="text-slate-600">—</span>}
+                      </td>
+                      <td className="px-4 py-3">
+                        {m.frequence_cardiaque != null ? (
+                          <span className="flex items-center gap-1.5">
+                            <IconHeart size={11} className="text-red-400" />
+                            <span className="font-medium text-white">{m.frequence_cardiaque}</span>
+                            <span className="text-slate-500 text-xs">bpm</span>
+                          </span>
+                        ) : <span className="text-slate-600">—</span>}
+                      </td>
+                      <td className="px-4 py-3">
+                        {m.sommeil != null ? (
+                          <span><span className="font-medium text-white">{m.sommeil}</span><span className="text-slate-500 text-xs"> h</span></span>
+                        ) : <span className="text-slate-600">—</span>}
+                      </td>
+                      <td className="px-4 py-3">
+                        {m.calories_brulees != null ? (
+                          <span><span className="font-medium text-white">{m.calories_brulees}</span><span className="text-slate-500 text-xs"> kcal</span></span>
+                        ) : <span className="text-slate-600">—</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

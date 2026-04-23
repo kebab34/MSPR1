@@ -148,6 +148,17 @@ def download_datasets():
             if ds["kaggle_file"] != ds["file"] and os.path.exists(kaggle_path):
                 shutil.move(kaggle_path, target)
 
+            # Casing différent (ex. gym_members…csv vs GYM_…) : casse normalisée
+            if not os.path.exists(target):
+                want = ds["file"].lower()
+                for f in os.listdir(DATA_DIR):
+                    path_f = os.path.join(DATA_DIR, f)
+                    if not os.path.isfile(path_f) or not f.lower().endswith(".csv"):
+                        continue
+                    if f.lower() == want and path_f != target:
+                        shutil.move(path_f, target)
+                        break
+
             if os.path.exists(target):
                 print(f"✅ {ds['file']} téléchargé avec succès.")
             else:

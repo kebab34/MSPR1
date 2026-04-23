@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 function backendBase(): string {
-  return (process.env.API_URL || "http://127.0.0.1:8002").replace(/\/$/, "");
+  return (process.env.API_URL || "http://127.0.0.1:8001").replace(/\/$/, "");
 }
 
 async function forward(
@@ -24,8 +24,8 @@ async function forward(
   };
 
   if (!["GET", "HEAD", "DELETE"].includes(request.method)) {
-    const body = await request.text();
-    if (body) init.body = body;
+    const body = await request.arrayBuffer();
+    if (body.byteLength) init.body = body;
   }
 
   const res = await fetch(target, init);

@@ -54,7 +54,7 @@ async def register(data: RegisterRequest):
     utilisateur_data: dict = {
         "email": data.email,
         "type_abonnement": "freemium",
-        "app_role": "admin",
+        "app_role": "user",
         "auth_id": auth_uid,
     }
     if data.nom is not None:

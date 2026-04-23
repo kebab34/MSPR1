@@ -8,7 +8,7 @@ from uuid import UUID
 from datetime import date
 from app.core.database import supabase_admin
 from app.schemas.journal import JournalAlimentaireCreate, JournalAlimentaireUpdate, JournalAlimentaireRead
-from app.api.v1.deps import get_current_user
+from app.api.v1.deps import get_current_profile
 
 router = APIRouter()
 
@@ -20,12 +20,13 @@ async def get_journal_entries(
     date_fin: Optional[date] = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    _u: dict = Depends(get_current_user),
+    current: dict = Depends(get_current_profile),
 ):
-    """Récupérer les entrées du journal alimentaire"""
     try:
+        if current["app_role"] != "admin":
+            utilisateur_id = UUID(current["id_utilisateur"])
+
         query = supabase_admin.table("journal_alimentaire").select("*")
-        
         if utilisateur_id:
             query = query.eq("id_utilisateur", str(utilisateur_id))
         if date_debut:
@@ -35,20 +36,22 @@ async def get_journal_entries(
 
         result = query.range(skip, skip + limit - 1).order("date_consommation", desc=True).execute()
         return result.data
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération: {str(e)}")
 
 
 @router.get("/{journal_id}", response_model=JournalAlimentaireRead)
-async def get_journal_entry(journal_id: UUID, _u: dict = Depends(get_current_user)):
-    """Récupérer une entrée du journal par son ID"""
+async def get_journal_entry(journal_id: UUID, current: dict = Depends(get_current_profile)):
     try:
         result = supabase_admin.table("journal_alimentaire").select("*").eq("id_journal", str(journal_id)).execute()
-        
         if not result.data:
             raise HTTPException(status_code=404, detail="Entrée du journal non trouvée")
-        
-        return result.data[0]
+        row = result.data[0]
+        if current["app_role"] != "admin" and str(row["id_utilisateur"]) != current["id_utilisateur"]:
+            raise HTTPException(status_code=403, detail="Accès refusé")
+        return row
     except HTTPException:
         raise
     except Exception as e:
@@ -56,15 +59,14 @@ async def get_journal_entry(journal_id: UUID, _u: dict = Depends(get_current_use
 
 
 @router.post("", response_model=JournalAlimentaireRead, status_code=201)
-async def create_journal_entry(entry: JournalAlimentaireCreate, _: dict = Depends(get_current_user)):
-    """Créer une nouvelle entrée dans le journal alimentaire"""
+async def create_journal_entry(entry: JournalAlimentaireCreate, current: dict = Depends(get_current_profile)):
     try:
-        data = entry.model_dump()
+        data = entry.model_dump(mode="json")
+        if current["app_role"] != "admin":
+            data["id_utilisateur"] = current["id_utilisateur"]
         result = supabase_admin.table("journal_alimentaire").insert(data).execute()
-        
         if not result.data:
             raise HTTPException(status_code=400, detail="Erreur lors de la création")
-        
         return result.data[0]
     except HTTPException:
         raise
@@ -73,19 +75,21 @@ async def create_journal_entry(entry: JournalAlimentaireCreate, _: dict = Depend
 
 
 @router.put("/{journal_id}", response_model=JournalAlimentaireRead)
-async def update_journal_entry(journal_id: UUID, entry: JournalAlimentaireUpdate, _: dict = Depends(get_current_user)):
-    """Mettre à jour une entrée du journal"""
+async def update_journal_entry(journal_id: UUID, entry: JournalAlimentaireUpdate, current: dict = Depends(get_current_profile)):
     try:
-        data = entry.model_dump(exclude_unset=True)
-        
+        existing = supabase_admin.table("journal_alimentaire").select("id_utilisateur").eq("id_journal", str(journal_id)).execute()
+        if not existing.data:
+            raise HTTPException(status_code=404, detail="Entrée du journal non trouvée")
+        if current["app_role"] != "admin" and str(existing.data[0]["id_utilisateur"]) != current["id_utilisateur"]:
+            raise HTTPException(status_code=403, detail="Accès refusé")
+
+        data = entry.model_dump(mode="json", exclude_unset=True)
         if not data:
             raise HTTPException(status_code=400, detail="Aucune donnée à mettre à jour")
-        
+
         result = supabase_admin.table("journal_alimentaire").update(data).eq("id_journal", str(journal_id)).execute()
-        
         if not result.data:
             raise HTTPException(status_code=404, detail="Entrée du journal non trouvée")
-        
         return result.data[0]
     except HTTPException:
         raise
@@ -94,18 +98,17 @@ async def update_journal_entry(journal_id: UUID, entry: JournalAlimentaireUpdate
 
 
 @router.delete("/{journal_id}", status_code=204)
-async def delete_journal_entry(journal_id: UUID, _: dict = Depends(get_current_user)):
-    """Supprimer une entrée du journal"""
+async def delete_journal_entry(journal_id: UUID, current: dict = Depends(get_current_profile)):
     try:
-        result = supabase_admin.table("journal_alimentaire").delete().eq("id_journal", str(journal_id)).execute()
-        
-        if not result.data:
+        existing = supabase_admin.table("journal_alimentaire").select("id_utilisateur").eq("id_journal", str(journal_id)).execute()
+        if not existing.data:
             raise HTTPException(status_code=404, detail="Entrée du journal non trouvée")
-        
+        if current["app_role"] != "admin" and str(existing.data[0]["id_utilisateur"]) != current["id_utilisateur"]:
+            raise HTTPException(status_code=403, detail="Accès refusé")
+
+        supabase_admin.table("journal_alimentaire").delete().eq("id_journal", str(journal_id)).execute()
         return None
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur lors de la suppression: {str(e)}")
-
-

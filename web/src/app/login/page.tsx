@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth, isApiError } from "@/contexts/auth-context";
+import { useAuth } from "@/contexts/auth-context";
+import { IconActivity, IconAlertCircle } from "@/components/icons";
 
 export default function LoginPage() {
   const { token, profile, loading, login, register } = useAuth();
@@ -18,24 +19,19 @@ export default function LoginPage() {
   const [password2, setPassword2] = useState("");
 
   useEffect(() => {
-    if (!loading && token && profile) {
-      router.replace("/");
-    }
+    if (!loading && token && profile) router.replace("/");
   }, [loading, token, profile, router]);
 
   async function onLogin(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
-    if (!email || !password) {
-      setErr("Saisissez l’email et le mot de passe.");
-      return;
-    }
+    if (!email || !password) { setErr("Email et mot de passe requis."); return; }
     setPending(true);
     try {
       await login(email, password);
       router.replace("/");
     } catch (ex) {
-      setErr(isApiError(ex) ? ex.message : String(ex));
+      setErr(ex instanceof Error ? ex.message : String(ex));
     } finally {
       setPending(false);
     }
@@ -44,20 +40,15 @@ export default function LoginPage() {
   async function onRegister(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
-    if (!email || !password) {
-      setErr("Email et mot de passe obligatoires.");
-      return;
-    }
-    if (password !== password2) {
-      setErr("Les mots de passe ne correspondent pas.");
-      return;
-    }
+    if (!email || !password) { setErr("Email et mot de passe requis."); return; }
+    if (password !== password2) { setErr("Les mots de passe ne correspondent pas."); return; }
+    if (password.length < 6) { setErr("Le mot de passe doit contenir au moins 6 caractères."); return; }
     setPending(true);
     try {
       await register(email, password, prenom, nom);
       router.replace("/");
     } catch (ex) {
-      setErr(isApiError(ex) ? ex.message : String(ex));
+      setErr(ex instanceof Error ? ex.message : String(ex));
     } finally {
       setPending(false);
     }
@@ -65,152 +56,155 @@ export default function LoginPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-zinc-400">
-        Chargement…
+      <div className="min-h-screen flex items-center justify-center bg-zinc-950">
+        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8 shadow-xl">
-        <div className="text-center mb-6">
-          <div className="text-4xl mb-2">💪</div>
-          <h1 className="text-xl font-bold text-white">HealthAI Coach</h1>
-          <p className="text-sm text-zinc-500 mt-1">Connexion à l’application</p>
-        </div>
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff06_1px,transparent_1px),linear-gradient(to_bottom,#ffffff06_1px,transparent_1px)] bg-[size:64px_64px]" />
 
-        <div className="flex rounded-lg bg-zinc-950 p-1 mb-6">
-          <button
-            type="button"
-            className={`flex-1 py-2 text-sm rounded-md transition-colors ${
-              tab === "login"
-                ? "bg-violet-600 text-white"
-                : "text-zinc-500 hover:text-zinc-300"
-            }`}
-            onClick={() => setTab("login")}
-          >
-            Se connecter
-          </button>
-          <button
-            type="button"
-            className={`flex-1 py-2 text-sm rounded-md transition-colors ${
-              tab === "register"
-                ? "bg-violet-600 text-white"
-                : "text-zinc-500 hover:text-zinc-300"
-            }`}
-            onClick={() => setTab("register")}
-          >
-            Créer un compte
-          </button>
-        </div>
-
-        {err && (
-          <div className="mb-4 text-sm text-red-400 bg-red-950/40 border border-red-900/50 rounded-lg px-3 py-2">
-            {err}
+      <div className="relative w-full max-w-sm">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-600 mb-4 shadow-lg shadow-blue-500/20">
+            <IconActivity size={24} className="text-white" />
           </div>
-        )}
+          <h1 className="text-2xl font-semibold text-white">HealthAI Coach</h1>
+          <p className="text-sm text-slate-400 mt-1">Votre espace santé personnalisé</p>
+        </div>
 
-        {tab === "login" ? (
-          <form onSubmit={onLogin} className="space-y-4">
-            <div>
-              <label className="block text-xs text-zinc-500 mb-1">Email</label>
-              <input
-                type="email"
-                autoComplete="email"
-                className="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-white"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="vous@exemple.com"
-              />
+        {/* Card */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+          {/* Tab switcher */}
+          <div className="flex bg-slate-800 rounded-lg p-1 mb-5">
+            {(["login", "register"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => { setTab(t); setErr(null); }}
+                className={`flex-1 py-1.5 text-sm rounded-md font-medium transition-all ${
+                  tab === t ? "bg-slate-700 text-white shadow" : "text-slate-400 hover:text-slate-300"
+                }`}
+              >
+                {t === "login" ? "Se connecter" : "S'inscrire"}
+              </button>
+            ))}
+          </div>
+
+          {err && (
+            <div className="flex items-center gap-2 px-3 py-2.5 mb-4 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-400">
+              <IconAlertCircle size={14} className="shrink-0" />
+              <span>{err}</span>
             </div>
-            <div>
-              <label className="block text-xs text-zinc-500 mb-1">
-                Mot de passe
-              </label>
-              <input
-                type="password"
-                autoComplete="current-password"
-                className="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-white"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={pending}
-              className="w-full py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-medium"
-            >
-              {pending ? "Connexion…" : "Se connecter"}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={onRegister} className="space-y-4">
-            <div>
-              <label className="block text-xs text-zinc-500 mb-1">Email *</label>
-              <input
-                type="email"
-                required
-                className="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-white"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs text-zinc-500 mb-1">Prénom</label>
+          )}
+
+          {tab === "login" ? (
+            <form onSubmit={onLogin} className="space-y-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-slate-400 font-medium">Adresse e-mail</label>
                 <input
-                  className="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-white"
-                  value={prenom}
-                  onChange={(e) => setPrenom(e.target.value)}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="vous@exemple.com"
+                  required
+                  autoComplete="email"
+                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-              <div>
-                <label className="block text-xs text-zinc-500 mb-1">Nom</label>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-slate-400 font-medium">Mot de passe</label>
                 <input
-                  className="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-white"
-                  value={nom}
-                  onChange={(e) => setNom(e.target.value)}
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  autoComplete="current-password"
+                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-            </div>
-            <div>
-              <label className="block text-xs text-zinc-500 mb-1">
-                Mot de passe *
-              </label>
-              <input
-                type="password"
-                required
-                className="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-white"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-zinc-500 mb-1">
-                Confirmer *
-              </label>
-              <input
-                type="password"
-                required
-                className="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-sm text-white"
-                value={password2}
-                onChange={(e) => setPassword2(e.target.value)}
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={pending}
-              className="w-full py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-medium"
-            >
-              {pending ? "Création…" : "Créer mon compte"}
-            </button>
-          </form>
-        )}
+              <button
+                type="submit"
+                disabled={pending}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium text-sm rounded-lg transition-colors"
+              >
+                {pending && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                {pending ? "Connexion…" : "Se connecter"}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={onRegister} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-slate-400 font-medium">Prénom</label>
+                  <input
+                    value={prenom}
+                    onChange={(e) => setPrenom(e.target.value)}
+                    placeholder="Jean"
+                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-slate-400 font-medium">Nom</label>
+                  <input
+                    value={nom}
+                    onChange={(e) => setNom(e.target.value)}
+                    placeholder="Dupont"
+                    className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-slate-400 font-medium">Adresse e-mail</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="vous@exemple.com"
+                  required
+                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-slate-400 font-medium">Mot de passe</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Min. 6 caractères"
+                  required
+                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-slate-400 font-medium">Confirmer le mot de passe</label>
+                <input
+                  type="password"
+                  value={password2}
+                  onChange={(e) => setPassword2(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={pending}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium text-sm rounded-lg transition-colors"
+              >
+                {pending && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                {pending ? "Inscription…" : "Créer mon compte"}
+              </button>
+            </form>
+          )}
+        </div>
 
-        <p className="mt-6 text-xs text-zinc-600 text-center">
-          API et Supabase doivent être accessibles. JWT_SECRET côté API = secret
-          JWT du projet Supabase.
+        <p className="text-center text-xs text-slate-600 mt-6">
+          Interface MSPR — Coaching santé personnalisé
         </p>
       </div>
     </div>

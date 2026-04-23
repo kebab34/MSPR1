@@ -13,7 +13,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "8002:8000"
+      - "8001:8000"
     environment:
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_KEY}
@@ -34,10 +34,12 @@ services:
       context: ./web
       dockerfile: Dockerfile
     container_name: mspr_web
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
-      - "${WEB_PORT:-8003}:3000"
+      - "${WEB_PORT:-8000}:3000"
     environment:
-      - API_URL=http://api:8000
+      - API_URL=http://host.docker.internal:8001
     depends_on:
       - api
     networks:

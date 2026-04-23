@@ -1,138 +1,158 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { apiFetch } from "@/lib/api";
+import { fetchAll } from "@/lib/fetch-all";
+import { StatCard, Card, Skeleton } from "@/components/ui";
+import {
+  IconUsers, IconLeaf, IconDumbbell, IconBook,
+  IconTimer, IconActivity, IconChevronRight,
+} from "@/components/icons";
 
-type Stats = { utilisateurs: number; aliments: number; exercices: number };
+type Stats = {
+  aliments: number;
+  exercices: number;
+};
+
+const QUICK_LINKS = [
+  { href: "/journal", label: "Journal alimentaire", desc: "Suivre mes repas", icon: <IconBook size={18} /> },
+  { href: "/sessions", label: "Sessions sport", desc: "Enregistrer une séance", icon: <IconTimer size={18} /> },
+  { href: "/mesures", label: "Mesures", desc: "Saisir mes indicateurs", icon: <IconActivity size={18} /> },
+  { href: "/exercices", label: "Exercices", desc: "Parcourir la bibliothèque", icon: <IconDumbbell size={18} /> },
+];
 
 export default function HomePage() {
-  const { token } = useAuth();
-  const [stats, setStats] = useState<Stats>({
-    utilisateurs: 0,
-    aliments: 0,
-    exercices: 0,
-  });
+  const { token, profile } = useAuth();
+  const [stats, setStats] = useState<Stats | null>(null);
   const [apiOk, setApiOk] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!token) return;
     let cancelled = false;
     (async () => {
-      const next: Stats = { utilisateurs: 0, aliments: 0, exercices: 0 };
-      let ok = true;
-      for (const [key, path] of [
-        ["utilisateurs", "/utilisateurs"],
-        ["aliments", "/aliments"],
-        ["exercices", "/exercices"],
-      ] as const) {
-        try {
-          const rows = await apiFetch<unknown[]>(path, { token });
-          next[key] = Array.isArray(rows) ? rows.length : 0;
-        } catch {
-          ok = false;
+      try {
+        const [a, e] = await Promise.all([
+          apiFetch<unknown[]>("/aliments", { token }),
+          apiFetch<unknown[]>("/exercices", { token }),
+        ]);
+        if (!cancelled) {
+          setStats({
+            aliments: Array.isArray(a) ? a.length : 0,
+            exercices: Array.isArray(e) ? e.length : 0,
+          });
+          setApiOk(true);
         }
-      }
-      if (!cancelled) {
-        setStats(next);
-        setApiOk(ok);
+      } catch {
+        if (!cancelled) setApiOk(false);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [token]);
 
-  const cards = [
-    { icon: "👥", value: stats.utilisateurs, label: "Utilisateurs" },
-    { icon: "🍎", value: stats.aliments, label: "Aliments" },
-    { icon: "🏋️", value: stats.exercices, label: "Exercices" },
-  ];
+  const firstName = profile?.prenom || profile?.email?.split("@")[0] || "vous";
+  const isAdmin = profile?.app_role === "admin";
 
   return (
     <div className="space-y-8">
-      <div
-        className="rounded-2xl p-8 text-center text-white shadow-lg"
-        style={{
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          boxShadow: "0 12px 48px rgba(102,126,234,0.35)",
-        }}
-      >
-        <div className="text-4xl mb-2">💪</div>
-        <h1 className="text-3xl font-extrabold">HealthAI Coach</h1>
-        <p className="text-white/90 mt-2 max-w-xl mx-auto">
-          Plateforme de coaching santé — données métier via l’API FastAPI.
-        </p>
-        <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/15 px-4 py-1 text-sm font-semibold">
-          {apiOk === null
-            ? "…"
-            : apiOk
-              ? "● Système opérationnel"
-              : "● API partiellement indisponible"}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {cards.map((c) => (
-          <div
-            key={c.label}
-            className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5"
-          >
-            <div className="text-2xl mb-1">{c.icon}</div>
-            <div className="text-2xl font-bold text-white">{c.value}</div>
-            <div className="text-sm text-zinc-500">{c.label}</div>
-          </div>
-        ))}
-      </div>
-
+      {/* Welcome header */}
       <div>
-        <h2 className="text-lg font-semibold text-white mb-3">
-          Navigation rapide
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Link
-            href="/utilisateurs"
-            className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm hover:border-violet-500/40 transition-colors"
-          >
-            👤 Utilisateurs
-          </Link>
-          <Link
-            href="/aliments"
-            className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm hover:border-violet-500/40 transition-colors"
-          >
-            🍎 Aliments
-          </Link>
-          <Link
-            href="/exercices"
-            className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm hover:border-violet-500/40 transition-colors"
-          >
-            🏋️ Exercices
-          </Link>
+        <div className="flex items-center gap-2 mb-1">
+          <div className={`w-2 h-2 rounded-full ${apiOk === null ? "bg-slate-500" : apiOk ? "bg-emerald-500" : "bg-red-500"}`} />
+          <span className="text-xs text-slate-500">
+            {apiOk === null ? "Connexion en cours…" : apiOk ? "Système opérationnel" : "API partiellement indisponible"}
+          </span>
+        </div>
+        <h1 className="text-2xl font-semibold text-white">
+          Bonjour, <span className="text-blue-400">{firstName}</span>
+        </h1>
+        <p className="text-sm text-slate-400 mt-1">
+          {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+        </p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {stats === null ? (
+          Array.from({ length: isAdmin ? 4 : 2 }).map((_, i) => (
+            <div key={i} className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+              <Skeleton className="h-3 w-20 mb-3" />
+              <Skeleton className="h-7 w-12" />
+            </div>
+          ))
+        ) : (
+          <>
+            <StatCard label="Aliments" value={stats.aliments} icon={<IconLeaf size={18} />} color="emerald" sub="en base" />
+            <StatCard label="Exercices" value={stats.exercices} icon={<IconDumbbell size={18} />} color="blue" sub="disponibles" />
+            {isAdmin && (
+              <>
+                <AdminUserStat token={token!} />
+              </>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Quick access */}
+      <div>
+        <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wide mb-3">Accès rapide</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {QUICK_LINKS.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="group flex items-center gap-3 bg-slate-900 border border-slate-800 rounded-xl px-4 py-3.5 hover:border-slate-700 hover:bg-slate-800/50 transition-all"
+            >
+              <div className="p-2 rounded-lg bg-slate-800 text-slate-400 group-hover:text-blue-400 group-hover:bg-blue-500/10 transition-all">
+                {item.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-slate-200">{item.label}</p>
+                <p className="text-xs text-slate-500">{item.desc}</p>
+              </div>
+              <IconChevronRight size={14} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
+            </Link>
+          ))}
         </div>
       </div>
 
-      <div className="text-xs text-zinc-600 border-t border-zinc-800 pt-6 space-y-1">
-        <div>
-          <a
-            href="http://localhost:8002/docs"
-            className="text-violet-400 hover:underline"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Swagger UI
-          </a>
-          {" · "}
-          <a
-            href="http://localhost:54323"
-            className="text-violet-400 hover:underline"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Supabase Studio
-          </a>
-        </div>
-      </div>
+      {/* Profile completion */}
+      {!profile?.prenom && (
+        <Card className="border-blue-500/20 bg-blue-500/5">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400 shrink-0">
+              <IconUsers size={18} />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-white">Complétez votre profil</p>
+              <p className="text-xs text-slate-400 mt-0.5">Ajoutez votre prénom, poids, taille et objectifs pour une expérience personnalisée.</p>
+            </div>
+            <Link
+              href="/profil"
+              className="shrink-0 text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1"
+            >
+              Compléter <IconChevronRight size={12} />
+            </Link>
+          </div>
+        </Card>
+      )}
     </div>
+  );
+}
+
+function AdminUserStat({ token }: { token: string }) {
+  const [count, setCount] = useState<number | null>(null);
+  useEffect(() => {
+    fetchAll<unknown>("/utilisateurs", token).then((d) => setCount(d.length)).catch(() => {});
+  }, [token]);
+  return (
+    <StatCard
+      label="Utilisateurs"
+      value={count ?? "—"}
+      icon={<IconUsers size={18} />}
+      color="purple"
+      sub="inscrits"
+    />
   );
 }

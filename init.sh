@@ -30,6 +30,16 @@ else
     echo ""
 fi
 
+# Port front pour les messages (aligné sur docker-compose : ${WEB_PORT:-8000})
+WEB_PORT_DISPLAY=8000
+if [ -f .env ]; then
+    set -a
+    # shellcheck disable=SC1091
+    source .env
+    set +a
+fi
+WEB_PORT_DISPLAY="${WEB_PORT:-8000}"
+
 # Créer le dossier data pour l'ETL s'il n'existe pas
 if [ ! -d "etl/data" ]; then
     mkdir -p etl/data
@@ -43,26 +53,46 @@ echo ""
 echo "✅ Initialisation terminée !"
 echo ""
 
-# Même logique que docker-compose : ${WEB_PORT:-8003} (le compose lit .env ; on affiche le bon port)
-WEB_PORT_DISPLAY=8003
-if [ -f .env ]; then
-  _wp_line=$(grep -E '^[[:space:]]*WEB_PORT=' .env | tail -1 || true)
-  if [ -n "$_wp_line" ]; then
-    WEB_PORT_DISPLAY=$(echo "$_wp_line" | sed 's/^[[:space:]]*WEB_PORT=//' | tr -d '"' | tr -d "'" | tr -d ' ')
-  fi
+# Vérifier si Supabase est déjà lancé
+if docker ps --filter name=supabase --format '{{.Names}}' | grep -q supabase; then
+    echo "⚠️  Supabase semble déjà lancé."
+    read -p "Voulez-vous le remettre à zéro ? (y/n) : " reset_supabase
+    if [ "$reset_supabase" = "y" ] || [ "$reset_supabase" = "Y" ]; then
+        echo "🔄 Remise à zéro de Supabase..."
+        supabase db reset
+    else
+        echo "✅ Supabase laissé tel quel."
+    fi
+else
+    echo "🚀 Démarrage de Supabase..."
+    supabase start
 fi
 
-supabase start
+# Vérifier si les conteneurs MSPR sont déjà en cours
+if docker ps --filter name=mspr --format '{{.Names}}' | grep -q mspr; then
+    echo "⚠️  Les conteneurs MSPR semblent déjà en cours."
+    read -p "Voulez-vous les supprimer ? (y/n) : " remove_mspr
+    if [ "$remove_mspr" = "y" ] || [ "$remove_mspr" = "Y" ]; then
+        echo "🗑️  Suppression des conteneurs MSPR..."
+        docker compose down
+    else
+        echo "✅ Conteneurs MSPR laissés tels quels."
+        echo "API : http://localhost:8001/docs"
+        echo "Web : http://localhost:${WEB_PORT_DISPLAY}"
+        exit 0
+    fi
+fi
+
 echo ""
 echo "➜  Démarrage des conteneurs (Ctrl+C pour arrêter)."
-echo "   API : http://localhost:8002/docs"
+echo "   API : http://localhost:8001/docs"
 echo "   Web : http://localhost:${WEB_PORT_DISPLAY}"
 echo "   Astuce : port déjà utilisé → éditer WEB_PORT dans .env ou arrêter l’autre processus."
 echo "   Anciens conteneurs (ex. streamlit) : nettoyés avec --remove-orphans."
 echo ""
 docker compose up --remove-orphans
 echo ""
-echo "API : http://localhost:8002/docs"
+echo "API : http://localhost:8001/docs"
 echo "Web : http://localhost:${WEB_PORT_DISPLAY}"
 echo ""
 
