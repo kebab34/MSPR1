@@ -37,7 +37,7 @@ export default function UtilisateursPage() {
   useEffect(() => {
     if (!token || profile?.app_role !== "admin") return;
     let cancelled = false;
-    apiFetch<Utilisateur[]>("/utilisateurs", { token, params: { limit: "10000" } })
+    apiFetch<Utilisateur[]>("/utilisateurs", { token, params: { limit: "1000" } })
       .then((d) => { if (!cancelled) { setRows(Array.isArray(d) ? d : []); setLoading(false); } })
       .catch((e) => { if (!cancelled) { setErr(String(e)); setLoading(false); } });
     return () => { cancelled = true; };

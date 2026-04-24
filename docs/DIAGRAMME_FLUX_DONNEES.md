@@ -124,11 +124,11 @@ Ce document présente le diagramme complet des flux de données du système Heal
                                     ▼
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│              PHASE 5 : VISUALISATION (Streamlit)                           │
+│              PHASE 5 : VISUALISATION (Next.js)                           │
 └─────────────────────────────────────────────────────────────────────────────┘
 
     ┌─────────────────────────────────────────────────────────────────┐
-    │              INTERFACE ADMINISTRATION (Streamlit)                  │
+    │              INTERFACE WEB (Next.js)                  │
     │                                                                  │
     │  Pages:                                                          │
     │  • Accueil (statistiques)                                        │
@@ -269,7 +269,7 @@ Ce document présente le diagramme complet des flux de données du système Heal
 
 ---
 
-## 5. Flux Streamlit : Interface Administration
+## 5. Flux Next.js : Interface Web
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -359,7 +359,7 @@ Ce document présente le diagramme complet des flux de données du système Heal
     │  │  Récupération                                             │  │
     │  │  • ETL: Continue avec source suivante                     │  │
     │  │  • API: Retourne HTTPException                            │  │
-    │  │  • Streamlit: Affiche message d'erreur                   │  │
+    │  │  • Next.js: Affiche message d'erreur                   │  │
     │  └──────────────────────────────────────────────────────────┘  │
     │                           │                                      │
     │                           ▼                                      │

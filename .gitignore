@@ -1,3 +1,6 @@
+# Ancien code Streamlit (remplacé par Next.js)
+streamlit/
+
 # Python
 __pycache__/
 *.py[cod]

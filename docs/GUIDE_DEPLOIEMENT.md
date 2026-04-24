@@ -3,7 +3,7 @@
 ## HealthAI Coach - Backend Métier
 
 **Version** : 1.0  
-**Date** : 2025
+**Date** : Avril 2026
 
 ---
 
@@ -92,11 +92,11 @@ docker-compose logs -f
 
 ### 2.4. Vérifier le Déploiement
 
-1. **API FastAPI** : http://localhost:8002 (port hôte dans `docker-compose.yml`)
-   - Documentation Swagger : http://localhost:8002/docs
-   - Health check : http://localhost:8002/health
+1. **API FastAPI** : http://localhost:8001 (port hôte dans `docker-compose.yml`)
+   - Documentation Swagger : http://localhost:8001/docs
+   - Health check : http://localhost:8001/health
 
-2. **Interface web Next.js** : http://localhost:8003 (défaut Docker ; surcharger avec `WEB_PORT` dans `.env`)
+2. **Interface web Next.js** : http://localhost:8000 (défaut Docker ; surcharger avec `WEB_PORT` dans `.env`)
 
 3. **Vérifier les logs** :
 ```bash
@@ -251,14 +251,14 @@ tail -f /var/log/etl.log  # Si configuré avec cron
 
 ### 6.1. API FastAPI
 
-- **URL (hôte, compose)** : http://localhost:8002
-- **Documentation Swagger** : http://localhost:8002/docs
-- **Documentation ReDoc** : http://localhost:8002/redoc
-- **Health Check** : http://localhost:8002/health
+- **URL (hôte, compose)** : http://localhost:8001
+- **Documentation Swagger** : http://localhost:8001/docs
+- **Documentation ReDoc** : http://localhost:8001/redoc
+- **Health Check** : http://localhost:8001/health
 
 ### 6.2. Interface web Next.js
 
-- **URL (Docker, hôte)** : http://localhost:8003 par défaut, ou la valeur de `WEB_PORT` dans `.env`
+- **URL (Docker, hôte)** : http://localhost:8000 par défaut, ou la valeur de `WEB_PORT` dans `.env`
 - **Fonctions** : authentification (JWT), consultation et saisie des ressources métier via l’API
 
 ---
@@ -399,7 +399,7 @@ Pour toute question ou problème :
 
 ---
 
-**Document généré le** : 2025  
+**Document généré le** : Avril 2026  
 **Version** : 1.0  
 **Auteur** : Équipe MSPR TPRE501
 

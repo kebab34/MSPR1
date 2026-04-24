@@ -1,60 +1,112 @@
-# Configuration Supabase local
+# 🔧 Configuration Supabase Local
 
-## Les trois ports utiles (ne pas les confondre)
+## Utilisation de Supabase en local
 
-| Rôle | Port | URL d’exemple |
-|------|------|---------------|
-| **API (Kong) — `SUPABASE_URL` pour l’appli** | **54321** | `http://127.0.0.1:54321` (REST, Auth, etc.) |
-| **PostgreSQL direct — `DATABASE_URL`** | **54322** | `postgresql://postgres:postgres@127.0.0.1:54322/postgres` |
-| **Studio (interface web, debug)** | **54323** | `http://127.0.0.1:54323` — *ce n’est pas* l’URL d’API pour le code. |
+Si tu utilises Supabase en local (via Supabase CLI), voici comment configurer le projet.
 
-L’ancienne version de ce document indiquait par erreur `54323` pour `SUPABASE_URL` : c’est la cause classique d’**API injoignable** alors que le Studio s’ouvre.
+## 1. Obtenir les clés API de Supabase local
 
-## 1. Clés API
+### Via le Dashboard local
 
-- Studio : `http://127.0.0.1:54323` → **Settings → API** (anon, service_role)
-- CLI : `supabase status` (même information)
+1. **Ouvrir le dashboard Supabase local** : http://localhost:54323
+2. **Aller dans Settings** (icône engrenage en bas à gauche)
+3. **Cliquer sur API**
+4. **Copier les clés suivantes** :
+   - **anon public** : C'est la `SUPABASE_KEY`
+   - **service_role** : C'est la `SUPABASE_SERVICE_KEY` (⚠️ SECRÈTE)
 
-## 2. Fichier `.env` (API / ETL lancés **hors** Docker, depuis ta machine)
+### Via la ligne de commande
+
+Si tu utilises Supabase CLI, tu peux aussi obtenir les clés avec :
+
+```bash
+supabase status
+```
+
+Cela affichera toutes les informations de connexion, y compris les clés API.
+
+## 2. Obtenir l'URL de connexion PostgreSQL
+
+Pour la `DATABASE_URL`, utilise :
+
+```bash
+supabase status
+```
+
+Ou directement dans le dashboard local :
+- **Settings > Database > Connection string**
+- Format : `postgresql://postgres:postgres@localhost:54322/postgres`
+
+⚠️ **Note** : Le port PostgreSQL est généralement **54322** (pas 54323)
+
+## 3. Mettre à jour le fichier .env
+
+Édite ton fichier `.env` à la racine du projet :
 
 ```env
-SUPABASE_URL=http://127.0.0.1:54321
-SUPABASE_KEY=...   # anon
-SUPABASE_SERVICE_KEY=...  # service_role
-DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres
-JWT_SECRET=...     # idem à la section JWT du `supabase status` / `config.toml` (sinon 401 côté API)
+# Supabase Local
+SUPABASE_URL=http://localhost:54323
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...  # anon public key
+SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...  # service_role key
+
+# Database (port PostgreSQL local, généralement 54322)
+DATABASE_URL=postgresql://postgres:postgres@localhost:54322/postgres
+
+# JWT Secret (peut être n'importe quelle chaîne pour le local)
+JWT_SECRET=your-local-jwt-secret-key
+
+# ETL Schedule
+ETL_SCHEDULE=0 */6 * * *
+
+# API URL (pour Streamlit)
+API_URL=http://localhost:8000
 ```
 
-## 3. Avec **Docker Compose** (services `mspr_api`, `mspr_etl`, etc.)
+## 4. Redémarrer les services
 
-L’hôte n’est plus `127.0.0.1` *vu depuis le conteneur*. Le `docker-compose.yml` du dépôt force :
-
-- `SUPABASE_URL=http://host.docker.internal:54321`
-- `DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:54322/postgres`
-- + `extra_hosts: host.docker.internal:host-gateway`
-
-Tes clés viennent toujours du **`.env` à la racine** (substitution `${SUPABASE_KEY}`…), mais **l’adresse d’hôte** est gérée par Compose. Ne mets **pas** `127.0.0.1` pour Supabase/Postgres si ton code tourne *dans* le conteneur (sauf si tu as une config réseau spécifique).
-
-**Prérequis** : Supabase local doit tourner *sur l’hôte* : `supabase start`. Sinon les ports 54321/54322 ne répondent pas.
-
-## 4. Vérification rapide
+Après avoir mis à jour le `.env`, redémarre les services :
 
 ```bash
-chmod +x scripts/verify_stack.sh
-./scripts/verify_stack.sh
+# Arrêter les services
+pkill -f 'uvicorn|next'
+
+# Redémarrer l'API
+cd api && python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload &
+
+# Redémarrer Streamlit
+cd web && npm run dev &
 ```
 
-Test manuel API :
+## 5. Vérifier la connexion
+
+Teste la connexion à Supabase local :
 
 ```bash
-curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:54321/rest/v1/
-# Souvent 401 ou 200 selon le endpoint — l’essentiel est qu’on ne soit pas "connection refused"
+curl http://localhost:54323/rest/v1/
 ```
 
-## 5. Dépannage
+Si tu obtiens une réponse, c'est que Supabase local fonctionne correctement.
 
-- **Connection refused (54321 / 54322)** : `supabase start` et `supabase status`.
-- **Injoignable depuis le conteneur** : vérifier `host.docker.internal` (pare-feu, `sudo ufw allow from 172.16.0.0/12` côté Docker, etc.).
-- **Invalid API key** : clés incomplètes ou mauvais fichier `.env` (anon vs `service_role`).
-- **Auth / token** : `JWT_SECRET` identique à celui utilisé par Supabase local.
-- **Cloud Supabase** : `SUPABASE_URL` = `https://xxxxx.supabase.co`, `DATABASE_URL` = chaîne *Database* du dashboard (hôte `db.xxxxx.supabase.co`, pas `127.0.0.1`).
+## Ports par défaut Supabase local
+
+- **Dashboard/API** : `http://localhost:54321` (ou `54323` selon ta config)
+- **PostgreSQL** : `localhost:54322`
+- **Studio** : `http://localhost:54323` (dashboard web)
+
+## Dépannage
+
+### Problème : "Connection refused"
+
+- Vérifie que Supabase local est bien démarré : `supabase status`
+- Vérifie que le port est correct (54323 dans ton cas)
+
+### Problème : "Invalid API key"
+
+- Vérifie que tu as bien copié la clé complète (elles sont très longues)
+- Assure-toi d'utiliser la bonne clé (anon pour SUPABASE_KEY, service_role pour SUPABASE_SERVICE_KEY)
+
+### Problème : "Database connection failed"
+
+- Vérifie que PostgreSQL est bien démarré
+- Vérifie le port PostgreSQL (généralement 54322)
+- Vérifie le mot de passe (par défaut: `postgres`)

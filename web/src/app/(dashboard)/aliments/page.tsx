@@ -39,7 +39,7 @@ export default function AlimentsPage() {
 
   const reload = useCallback(async () => {
     if (!token) return;
-    const data = await apiFetch<Aliment[]>("/aliments", { token });
+    const data = await apiFetch<Aliment[]>("/aliments", { token, params: { limit: "1000" } });
     setRows(Array.isArray(data) ? data : []);
   }, [token]);
 

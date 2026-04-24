@@ -26,7 +26,9 @@ async def get_sessions(
         if current["app_role"] != "admin":
             utilisateur_id = UUID(current["id_utilisateur"])
 
-        query = supabase_admin.table("sessions_sport").select("*")
+        query = supabase_admin.table("sessions_sport").select(
+            "*, session_exercices(id_exercice, nombre_series, nombre_repetitions, poids, duree, exercices(nom))"
+        )
         if utilisateur_id:
             query = query.eq("id_utilisateur", str(utilisateur_id))
         if date_debut:
@@ -45,7 +47,9 @@ async def get_sessions(
 @router.get("/{session_id}", response_model=SessionSportRead)
 async def get_session(session_id: UUID, current: dict = Depends(get_current_profile)):
     try:
-        result = supabase_admin.table("sessions_sport").select("*").eq("id_session", str(session_id)).execute()
+        result = supabase_admin.table("sessions_sport").select(
+            "*, session_exercices(id_exercice, nombre_series, nombre_repetitions, poids, duree, exercices(nom))"
+        ).eq("id_session", str(session_id)).execute()
         if not result.data:
             raise HTTPException(status_code=404, detail="Session non trouvée")
         row = result.data[0]
@@ -77,7 +81,9 @@ async def create_session(session: SessionSportCreate, current: dict = Depends(ge
                 exercice_data["id_session"] = session_id
                 supabase_admin.table("session_exercices").insert(exercice_data).execute()
 
-        result = supabase_admin.table("sessions_sport").select("*").eq("id_session", session_id).execute()
+        result = supabase_admin.table("sessions_sport").select(
+            "*, session_exercices(id_exercice, nombre_series, nombre_repetitions, poids, duree, exercices(nom))"
+        ).eq("id_session", session_id).execute()
         return result.data[0]
     except HTTPException:
         raise

@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { apiFetch } from "@/lib/api";
 import { fetchUsersForPicker, labelUser, type PickUser } from "@/lib/picker-users";
 import { PageHeader, Btn, Card, Input, Select, Alert, SkeletonTable, EmptyState, StatCard } from "@/components/ui";
-import { IconActivity, IconPlus, IconAlertCircle, IconCheck, IconHeart, IconFlame, IconMoon } from "@/components/icons";
+import { IconActivity, IconPlus, IconAlertCircle, IconCheck, IconHeart, IconFlame, IconMoon, IconTrash, IconDownload } from "@/components/icons";
 
 type Mesure = {
   id_mesure: string;
@@ -69,6 +69,27 @@ export default function MesuresPage() {
     return () => { cancelled = true; };
   }, [token, userId, loadMesures]);
 
+  async function onDelete(id: string) {
+    if (!token || !confirm("Supprimer cette mesure ?")) return;
+    try {
+      await apiFetch(`/mesures/${id}`, { method: "DELETE", token });
+      setRows((prev) => prev.filter((m) => m.id_mesure !== id));
+    } catch (ex) {
+      setErr(ex instanceof Error ? ex.message : String(ex));
+    }
+  }
+
+  function exportCSV() {
+    const headers = ["date_mesure", "poids", "frequence_cardiaque", "sommeil", "calories_brulees"];
+    const csv = [headers.join(","), ...rows.map((m) =>
+      [m.date_mesure, m.poids ?? "", m.frequence_cardiaque ?? "", m.sommeil ?? "", m.calories_brulees ?? ""].join(",")
+    )].join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    a.download = "mesures.csv";
+    a.click();
+  }
+
   async function onAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!token || !userId) return;
@@ -106,9 +127,10 @@ export default function MesuresPage() {
         title="Mesures biométriques"
         subtitle="Suivez l'évolution de vos indicateurs de santé"
         action={
-          <Btn size="sm" onClick={() => setShowForm(!showForm)}>
-            <IconPlus size={14} /> Nouvelle mesure
-          </Btn>
+          <div className="flex gap-2">
+            {rows.length > 0 && <Btn size="sm" variant="ghost" onClick={exportCSV}><IconDownload size={14} /> CSV</Btn>}
+            <Btn size="sm" onClick={() => setShowForm(!showForm)}><IconPlus size={14} /> Nouvelle mesure</Btn>
+          </div>
         }
       />
 
@@ -182,7 +204,7 @@ export default function MesuresPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-800/50 border-b border-slate-800">
-                  {["Date", "Poids", "Fréq. cardiaque", "Sommeil", "Calories brûlées"].map((h) => (
+                  {["Date", "Poids", "Fréq. cardiaque", "Sommeil", "Calories brûlées", ""].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase tracking-wide">{h}</th>
                   ))}
                 </tr>
@@ -232,6 +254,11 @@ export default function MesuresPage() {
                         {m.calories_brulees != null ? (
                           <span><span className="font-medium text-white">{m.calories_brulees}</span><span className="text-slate-500 text-xs"> kcal</span></span>
                         ) : <span className="text-slate-600">—</span>}
+                      </td>
+                      <td className="px-4 py-3">
+                        <button onClick={() => onDelete(m.id_mesure)} className="text-slate-600 hover:text-red-400 transition-colors">
+                          <IconTrash size={14} />
+                        </button>
                       </td>
                     </tr>
                   );

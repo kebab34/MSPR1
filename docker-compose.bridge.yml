@@ -34,12 +34,10 @@ services:
       context: ./web
       dockerfile: Dockerfile
     container_name: mspr_web
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     ports:
       - "${WEB_PORT:-8000}:3000"
     environment:
-      - API_URL=http://host.docker.internal:8001
+      - API_URL=http://api:8000
     depends_on:
       - api
     networks:

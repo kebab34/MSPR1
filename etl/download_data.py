@@ -85,20 +85,11 @@ def check_kaggle_credentials() -> None:
     if os.path.isfile(path):
         return
 
-    cfg_dir = _kaggle_config_dir()
-    print("❌ Fichier kaggle.json introuvable pour le client Python Kaggle.")
-    print(f"   Emplacement attendu sur ta machine : {path}")
-    print()
-    print("Le paquet pip « kaggle » exige un JSON avec username + key (pas seulement un token d’interface).")
-    print()
-    print("→ Va sur https://www.kaggle.com/settings → API → section « Legacy API Credentials »")
-    print("  → « Create Legacy API Key » : télécharge kaggle.json et copie-le vers :")
-    print(f"     {path}")
-    print()
-    print("Ou définis avant de lancer le script (pseudo = ton nom d’utilisateur Kaggle) :")
-    print("  export KAGGLE_USERNAME='ton_pseudo'")
-    print("  export KAGGLE_KEY='ta_clé_telle_que_dans_le_legacy_json'")
-    sys.exit(1)
+    raise RuntimeError(
+        "Credentials Kaggle manquants. "
+        "Définissez KAGGLE_USERNAME et KAGGLE_KEY dans le .env "
+        "(obtenez-les sur https://www.kaggle.com/settings → API → Legacy API Credentials)."
+    )
 
 
 def _print_kaggle_403_help() -> None:
@@ -122,8 +113,7 @@ def download_datasets():
     try:
         import kaggle
     except ImportError:
-        print("❌ Package 'kaggle' non installé. Lance : pip install kaggle")
-        sys.exit(1)
+        raise RuntimeError("Package 'kaggle' non installé. Ajoutez-le dans requirements.txt.")
 
     os.makedirs(DATA_DIR, exist_ok=True)
 
@@ -147,17 +137,6 @@ def download_datasets():
             kaggle_path = os.path.join(DATA_DIR, ds["kaggle_file"])
             if ds["kaggle_file"] != ds["file"] and os.path.exists(kaggle_path):
                 shutil.move(kaggle_path, target)
-
-            # Casing différent (ex. gym_members…csv vs GYM_…) : casse normalisée
-            if not os.path.exists(target):
-                want = ds["file"].lower()
-                for f in os.listdir(DATA_DIR):
-                    path_f = os.path.join(DATA_DIR, f)
-                    if not os.path.isfile(path_f) or not f.lower().endswith(".csv"):
-                        continue
-                    if f.lower() == want and path_f != target:
-                        shutil.move(path_f, target)
-                        break
 
             if os.path.exists(target):
                 print(f"✅ {ds['file']} téléchargé avec succès.")

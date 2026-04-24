@@ -30,12 +30,13 @@ export default function ExercicesPage() {
   const [filterType, setFilterType] = useState("");
   const [filterGroupe, setFilterGroupe] = useState("");
   const [filterNiveau, setFilterNiveau] = useState("");
+  const [filterEquipement, setFilterEquipement] = useState("");
 
   useEffect(() => {
     if (!token) return;
     let cancelled = false;
     setLoading(true);
-    apiFetch<Exercice[]>("/exercices", { token })
+    apiFetch<Exercice[]>("/exercices", { token, params: { limit: "1000" } })
       .then((d) => { if (!cancelled) { setRows(Array.isArray(d) ? d : []); setLoading(false); } })
       .catch((e) => { if (!cancelled) { setErr(String(e)); setLoading(false); } });
     return () => { cancelled = true; };
@@ -44,14 +45,16 @@ export default function ExercicesPage() {
   const types = useMemo(() => [...new Set(rows.map((r) => r.type).filter(Boolean))].sort() as string[], [rows]);
   const groupes = useMemo(() => [...new Set(rows.map((r) => r.groupe_musculaire).filter(Boolean))].sort() as string[], [rows]);
   const niveaux = useMemo(() => [...new Set(rows.map((r) => r.niveau).filter(Boolean))].sort() as string[], [rows]);
+  const equipements = useMemo(() => [...new Set(rows.map((r) => r.equipement).filter(Boolean))].sort() as string[], [rows]);
 
   const filtered = useMemo(() => rows.filter((r) => {
     if (search && !r.nom.toLowerCase().includes(search.toLowerCase())) return false;
     if (filterType && r.type !== filterType) return false;
     if (filterGroupe && r.groupe_musculaire !== filterGroupe) return false;
     if (filterNiveau && r.niveau !== filterNiveau) return false;
+    if (filterEquipement && r.equipement !== filterEquipement) return false;
     return true;
-  }), [rows, search, filterType, filterGroupe, filterNiveau]);
+  }), [rows, search, filterType, filterGroupe, filterNiveau, filterEquipement]);
 
   return (
     <div className="space-y-6">
@@ -64,7 +67,7 @@ export default function ExercicesPage() {
 
       {/* Filters */}
       <Card>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <div className="relative lg:col-span-1">
             <IconSearch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
             <input
@@ -85,6 +88,10 @@ export default function ExercicesPage() {
           <Select value={filterNiveau} onChange={(e) => setFilterNiveau(e.target.value)}>
             <option value="">Tous niveaux</option>
             {niveaux.map((n) => <option key={n} value={n}>{n}</option>)}
+          </Select>
+          <Select value={filterEquipement} onChange={(e) => setFilterEquipement(e.target.value)}>
+            <option value="">Tout équipement</option>
+            {equipements.map((eq) => <option key={eq} value={eq}>{eq}</option>)}
           </Select>
         </div>
         {(search || filterType || filterGroupe || filterNiveau) && (

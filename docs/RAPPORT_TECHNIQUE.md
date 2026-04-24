@@ -1,10 +1,10 @@
-# 📄 Rapport Technique - HealthAI Coach Backend
+# Rapport Technique — HealthAI Coach Backend
 
-## Projet MSPR TPRE501 - Bloc E6.1
+## Projet MSPR TPRE501 — Bloc E6.1
 
 **Équipe projet** : MSPR TPRE501  
-**Date** : 2025  
-**Version** : 1.0
+**Date** : Avril 2026  
+**Version** : 2.0
 
 ---
 
@@ -22,7 +22,7 @@ L'objectif principal était de concevoir, développer et livrer le backend méti
 - Un processus de transformation et de nettoyage garantissant l'exploitabilité des données
 - Une base de données relationnelle adaptée aux besoins de l'entreprise
 - Une API REST permettant de consulter et d'exploiter les données consolidées
-- Une interface de visualisation accessible permettant de suivre les indicateurs clés
+- Une interface web accessible permettant de suivre les indicateurs clés
 
 ---
 
@@ -30,93 +30,68 @@ L'objectif principal était de concevoir, développer et livrer le backend méti
 
 ### 2.1. Architecture Générale
 
-L'architecture choisie suit une approche modulaire et microservices, permettant une évolution future et une maintenance facilitée :
+L'architecture choisie suit une approche modulaire en trois services Docker indépendants :
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   ETL       │────▶│  Supabase   │◀────│    API      │
-│  Pipeline   │     │ (PostgreSQL)│     │  (FastAPI)  │
-└─────────────┘     └─────────────┘     └──────┬──────┘
-                                                │
-                                                ▼
-                                         ┌─────────────┐
-                                         │  Streamlit  │
-                                         │  Interface  │
-                                         └─────────────┘
+┌─────────────┐     ┌──────────────────┐     ┌─────────────┐
+│   ETL       │────▶│     Supabase     │◀────│    API      │
+│  Pipeline   │     │   (PostgreSQL)   │     │  (FastAPI)  │
+└─────────────┘     └──────────────────┘     └──────┬──────┘
+                                                     │ HTTP
+                                                     ▼
+                                             ┌─────────────┐
+                                             │  Next.js    │
+                                             │  Interface  │
+                                             └─────────────┘
 ```
+
+Le frontend Next.js communique exclusivement avec l'API FastAPI via un proxy interne (`/api/mspr`) — jamais directement avec Supabase. Cela garantit que toute la logique d'autorisation passe par l'API.
 
 ### 2.2. Technologies Retenues
 
 #### 2.2.1. Base de Données : Supabase (PostgreSQL)
 
 **Justification** :
-- PostgreSQL offre une robustesse et des performances adaptées aux besoins relationnels
-- Supabase fournit une infrastructure hébergée avec authentification intégrée
-- Support natif des types de données complexes (arrays, JSON)
-- Compatible avec les outils standards (SQL, ORM)
+- PostgreSQL offre robustesse et performances adaptées aux besoins relationnels
+- Supabase fournit une infrastructure hébergée avec authentification JWT intégrée
+- Support natif des types complexes (arrays, JSONB, UUID)
+- Interface d'administration et SQL Editor intégrés
 
-**Avantages** :
-- Déploiement rapide sans gestion d'infrastructure
-- API REST automatique
-- Row Level Security (RLS) pour la sécurité
-- Interface d'administration intégrée
-
-#### 2.2.2. API : FastAPI
+#### 2.2.2. API : FastAPI (Python)
 
 **Justification** :
-- Framework moderne et performant (basé sur Starlette et Pydantic)
-- Documentation OpenAPI automatique (Swagger UI)
-- Validation des données intégrée via Pydantic
-- Support asynchrone natif
-- Type hints pour une meilleure maintenabilité
+- Framework moderne et performant (Starlette + Pydantic)
+- Documentation OpenAPI automatique accessible sur `/docs` et `/redoc`
+- Validation des données intégrée via Pydantic v2
+- Support asynchrone natif, type hints pour la maintenabilité
 
-**Avantages** :
-- Développement rapide
-- Documentation interactive automatique
-- Validation automatique des entrées/sorties
-- Performance élevée
-
-#### 2.2.3. Interface Administration : Streamlit
+#### 2.2.3. Interface Web : Next.js 15 + React 19
 
 **Justification** :
-- Framework Python simple pour créer des interfaces web rapidement
-- Intégration native avec Pandas et les bibliothèques de visualisation
-- Pas besoin de connaissances frontend (HTML/CSS/JS)
-- Déploiement facile
+- Framework React avec rendu hybride (SSR/CSR) et routage intégré
+- Tailwind CSS v4 pour un design système cohérent et accessible
+- Proxy interne (`/api/mspr`) évitant l'exposition directe de l'API au navigateur
+- Contrôle total sur le HTML généré (contrairement à Streamlit) permettant la conformité RGAA
 
-**Avantages** :
-- Développement rapide d'interfaces interactives
-- Support natif des graphiques (Plotly, Matplotlib)
-- Compatible avec l'écosystème Python existant
-- Accessible pour les équipes non techniques
+**Avantages par rapport à une solution Python-only** :
+- Séparation claire frontend/backend
+- Expérience utilisateur réactive (pas de rechargement de page)
+- Accessibilité numérique contrôlable (RGAA AA)
+- Déploiement indépendant des services
 
-#### 2.2.4. Pipeline ETL : Python + Pandas
+#### 2.2.4. Pipeline ETL : Python + Pandas + APScheduler
 
 **Justification** :
-- Pandas est la bibliothèque standard pour la manipulation de données en Python
-- Support natif de nombreux formats (CSV, JSON, Excel, API)
-- Fonctions de nettoyage et transformation puissantes
-- Intégration facile avec les autres composants
-
-**Avantages** :
-- Flexibilité dans le traitement des données
-- Large communauté et documentation
-- Performance sur les datasets moyens
-- Compatibilité avec l'écosystème Python
+- Pandas est la bibliothèque standard pour la manipulation de données
+- APScheduler permet la planification cron en pur Python sans dépendance externe
+- Architecture modulaire : `extract.py`, `transform.py`, `load.py`
 
 #### 2.2.5. Orchestration : Docker & Docker Compose
 
 **Justification** :
-- Standardisation de l'environnement de développement et production
-- Isolation des services
-- Facilité de déploiement
-- Reproducibilité
-
-**Avantages** :
-- Environnement reproductible
-- Déploiement simplifié
-- Isolation des dépendances
-- Compatible avec la plupart des plateformes cloud
+- Environnement reproductible sur toute machine disposant de Docker
+- Isolation des services (api, web, etl)
+- Déploiement en une commande (`docker-compose up -d`)
 
 ---
 
@@ -124,48 +99,67 @@ L'architecture choisie suit une approche modulaire et microservices, permettant 
 
 ### 3.1. Modèle de Données
 
-Le modèle de données suit une approche relationnelle classique avec les entités suivantes :
+Le modèle de données suit une approche relationnelle avec 11 tables :
 
-- **Utilisateurs** : Profils des utilisateurs de la plateforme
-- **Objectifs** : Objectifs personnalisés des utilisateurs
-- **Aliments** : Base nutritionnelle
-- **Exercices** : Catalogue d'exercices sportifs
-- **Journal alimentaire** : Suivi nutritionnel quotidien
-- **Sessions sport** : Sessions d'entraînement
-- **Mesures biométriques** : Données de santé (poids, fréquence cardiaque, etc.)
+| Table | Rôle |
+|---|---|
+| `utilisateurs` | Profils utilisateurs, rôles, abonnements |
+| `aliments` | Base nutritionnelle (calories, macronutriments) |
+| `exercices` | Catalogue d'exercices sportifs |
+| `journal_alimentaire` | Suivi nutritionnel quotidien |
+| `sessions_sport` | Sessions d'entraînement |
+| `session_exercices` | Exercices réalisés par session (table associative) |
+| `mesures_biometriques` | Données de santé (poids, FC, sommeil) |
+| `objectifs` | Objectifs personnalisés des utilisateurs |
+| `progressions` | Suivi des progressions sur exercice |
+| `recettes` | Recettes nutritionnelles |
+| `recette_aliments` | Composition des recettes (table associative) |
 
-Le Modèle Conceptuel de Données (MCD) et le Modèle Logique de Données (MLD) sont documentés dans `docs/MCD.txt` et `docs/MLD.txt`.
+La documentation complète est disponible dans `docs/MCD.txt`, `docs/MLD.txt` et `docs/MPD.md`.
 
 ### 3.2. Pipeline ETL
 
 Le pipeline ETL suit l'architecture classique Extract-Transform-Load :
 
-1. **Extract** : Extraction depuis diverses sources (API, CSV, JSON)
-2. **Transform** : Nettoyage, normalisation, validation
-3. **Load** : Chargement dans Supabase avec gestion des conflits
+1. **Extract** : Extraction depuis ExerciseDB API et 3 datasets Kaggle (CSV)
+2. **Transform** : Nettoyage, normalisation, validation (`transform.py`)
+3. **Load** : Chargement dans Supabase avec upsert (gestion des conflits)
 
-Le pipeline est planifié via APScheduler pour s'exécuter automatiquement (par défaut toutes les 6 heures).
+**Planification** : APScheduler avec expression cron configurable via `ETL_SCHEDULE` (défaut : `0 2 * * 1` = lundi 02h00 UTC). Le pipeline s'exécute également immédiatement au démarrage du conteneur.
+
+**Logs** : Chaque exécution produit :
+- Un fichier log rotatif journalier dans `etl/logs/etl_YYYY-MM-DD.log`
+- Un rapport JSON dans `etl/logs/reports/report_YYYY-MM-DD_HH-MM-SS.json` (statut, durée, lignes chargées, erreurs par source)
 
 ### 3.3. API REST
 
-L'API FastAPI expose des endpoints CRUD pour toutes les entités :
+L'API FastAPI expose des endpoints CRUD complets avec contrôle d'accès basé sur les rôles (user/admin) :
 
-- `GET /api/v1/{entity}` : Liste avec pagination et filtres
-- `GET /api/v1/{entity}/{id}` : Détails d'un enregistrement
-- `POST /api/v1/{entity}` : Création
-- `PUT /api/v1/{entity}/{id}` : Mise à jour
-- `DELETE /api/v1/{entity}/{id}` : Suppression
+| Méthode | Pattern | Description |
+|---|---|---|
+| GET | `/api/v1/{entité}` | Liste paginée avec filtres |
+| GET | `/api/v1/{entité}/{id}` | Détail d'un enregistrement |
+| POST | `/api/v1/{entité}` | Création |
+| PUT | `/api/v1/{entité}/{id}` | Mise à jour partielle |
+| DELETE | `/api/v1/{entité}/{id}` | Suppression |
 
-La documentation OpenAPI est accessible via `/docs`.
+**Sécurité** : JWT Supabase vérifié à chaque requête via `get_current_profile` (middleware). Les utilisateurs non-admin ne voient que leurs propres données (filtre forcé côté serveur).
 
-### 3.4. Interface Streamlit
+**Documentation** : OpenAPI interactive sur `http://localhost:8001/docs`.
 
-L'interface Streamlit propose :
+### 3.4. Interface Web Next.js
 
-- **Accueil** : Vue d'ensemble avec statistiques
-- **Dashboard** : Graphiques interactifs et KPIs business
-- **Gestion CRUD** : Exercices, Utilisateurs, Aliments
-- **Configuration** : Outils de nettoyage, métriques de qualité, export
+L'interface propose :
+
+- **Accueil** : Statistiques globales, accès rapide aux fonctionnalités
+- **Journal alimentaire** : Saisie avec recherche d'aliments par nom, historique, export CSV
+- **Sessions sport** : Enregistrement de séances avec sélection d'exercices (séries/reps/poids), export CSV
+- **Mesures biométriques** : Saisie et historique des indicateurs de santé, export CSV
+- **Aliments** : Catalogue searchable avec filtres
+- **Exercices** : Catalogue avec filtres type/muscle/niveau/équipement
+- **Profil** : Gestion du profil utilisateur
+- **Utilisateurs** (admin) : Gestion et recherche des comptes
+- **Analytics** (admin) : Tableau de bord avec KPIs et distribution des données
 
 ---
 
@@ -174,69 +168,64 @@ L'interface Streamlit propose :
 ### 4.1. Fonctionnalités Implémentées
 
 ✅ **Pipeline ETL opérationnel** :
-- Extraction depuis ExerciseDB API (200+ exercices)
-- Extraction depuis fichiers CSV (aliments)
-- Transformation et nettoyage automatique
-- Chargement dans Supabase avec gestion des conflits
+- Extraction depuis ExerciseDB API (200 exercices)
+- Extraction depuis 3 datasets Kaggle (aliments, utilisateurs, mesures)
+- Téléchargement automatique des datasets si absents
+- Logs fichiers + rapports JSON par exécution
+- Planification APScheduler configurable
 
 ✅ **Base de données relationnelle** :
-- 11 tables créées selon le MLD
-- Relations et contraintes définies
-- Index pour optimiser les performances
+- 11 tables avec relations, contraintes et index
+- Scripts SQL de migration versionnés (`supabase/migrations/`)
+- MCD, MLD et MPD documentés
 
 ✅ **API REST complète** :
 - Endpoints CRUD pour toutes les entités
+- Authentification JWT et contrôle d'accès par rôle
 - Documentation OpenAPI interactive
-- Validation des données via Pydantic
-- Gestion des erreurs
+- Tests automatisés (pytest + mock Supabase)
 
-✅ **Interface d'administration** :
-- Dashboard avec visualisations interactives
-- Gestion CRUD complète
-- Outils de nettoyage interactifs
-- Export des données (CSV/JSON)
-- Métriques de qualité
+✅ **Interface web accessible** :
+- Design responsive (mobile + desktop)
+- Export CSV (journal, sessions, mesures)
+- Suppression depuis l'UI avec confirmation
+- Conformité RGAA AA documentée
+- Authentification (login + inscription)
 
-### 4.2. Métriques de Performance
+### 4.2. Métriques
 
-- **Temps d'exécution ETL** : ~30-60 secondes pour 200 exercices
+- **Temps d'exécution ETL** : ~30–60 secondes (200 exercices + datasets Kaggle)
 - **Temps de réponse API** : < 200ms pour la plupart des requêtes
-- **Volume de données** : 200+ exercices, 4+ aliments, 2+ utilisateurs de test
-- **Taux de réussite ETL** : > 95% (gestion des erreurs par source)
-
-### 4.3. Qualité des Données
-
-- **Taux de doublons détectés** : < 5%
-- **Taux de valeurs manquantes** : < 10%
-- **Taux de validation** : > 90% des données passent la validation
+- **Taux de réussite ETL** : > 95% (gestion des erreurs par source isolée)
+- **Volume de données** : 200+ exercices, 500+ aliments, 1000+ utilisateurs (datasets Kaggle)
 
 ---
 
 ## 5. Difficultés Rencontrées et Solutions
 
-### 5.1. Gestion des Types de Données Complexes
+### 5.1. Sérialisation des dates Python → JSON
 
-**Problème** : Les données d'exercices contenaient des listes (groupes musculaires, équipements) qui n'étaient pas directement compatibles avec PostgreSQL.
+**Problème** : `model_dump()` de Pydantic retourne des objets `datetime` Python non sérialisables par le client Supabase.
 
-**Solution** : Conversion des listes en chaînes de caractères ou utilisation de types array PostgreSQL selon le besoin.
+**Solution** : Utilisation de `model_dump(mode="json")` qui convertit les datetimes en chaînes ISO 8601 avant l'insertion.
 
-### 5.2. Gestion des Conflits lors du Chargement
+### 5.2. Gestion des conflits lors du chargement ETL
 
-**Problème** : Les données extraites pouvaient contenir des doublons, causant des erreurs lors de l'insertion.
+**Problème** : Les datasets contiennent des doublons causant des erreurs d'insertion.
 
-**Solution** : Implémentation d'un système d'upsert basé sur des clés uniques (nom pour exercices/aliments, email pour utilisateurs).
+**Solution** : Upsert basé sur clés uniques (`nom` pour exercices/aliments, `email` pour utilisateurs).
 
-### 5.3. Validation des Données Hétérogènes
+### 5.3. Validation des données hétérogènes
 
-**Problème** : Les sources de données avaient des formats différents (colonnes, noms, types).
+**Problème** : Formats différents selon les sources (colonnes, types, encodages).
 
-**Solution** : Création de fonctions de transformation spécifiques par source, avec normalisation vers un schéma commun.
+**Solution** : Fonctions de transformation spécifiques par source dans `transform.py`, normalisation vers un schéma commun.
 
-### 5.4. Configuration des Variables d'Environnement
+### 5.4. Accessibilité et choix du framework frontend
 
-**Problème** : Les variables d'environnement n'étaient pas toujours chargées correctement selon le contexte d'exécution.
+**Problème** : Streamlit (solution initiale) ne permettait pas de contrôler le HTML généré, rendant la conformité RGAA impossible.
 
-**Solution** : Utilisation de chemins absolus pour le fichier `.env` et validation explicite des variables requises.
+**Solution** : Migration vers Next.js 15, permettant le contrôle total des balises sémantiques, attributs ARIA et contrastes.
 
 ---
 
@@ -244,32 +233,27 @@ L'interface Streamlit propose :
 
 ### 6.1. Court Terme
 
-- **Authentification complète** : Implémentation de l'authentification JWT avec Supabase Auth
-- **Row Level Security** : Activation de RLS dans Supabase pour la sécurité des données
-- **Tests automatisés** : Ajout de tests unitaires et d'intégration
-- **Pages Streamlit manquantes** : Journal alimentaire, Sessions sport, Mesures biométriques
+- **ARIA complets** : Ajouter `aria-hidden` sur les icônes décoratives, rôles `combobox`/`listbox` sur les dropdowns
+- **Modules IA** : Recommandations nutritionnelles et sportives personnalisées
+- **Monitoring** : Tableau de bord de santé ETL visible dans l'interface admin
 
 ### 6.2. Moyen Terme
 
-- **Modules IA** : Intégration de modèles de recommandation personnalisés
-- **Monitoring** : Ajout de métriques et alertes (Prometheus, Grafana)
-- **Cache** : Mise en place d'un système de cache (Redis) pour améliorer les performances
-- **API GraphQL** : Alternative à REST pour des requêtes plus flexibles
+- **Cache Redis** : Pour les endpoints les plus sollicités (listes aliments/exercices)
+- **Notifications push** : Rappels journalier de saisie
+- **Intégration objets connectés** : Import automatique des données biométriques
 
 ### 6.3. Long Terme
 
-- **Scalabilité** : Migration vers une architecture microservices complète
-- **Data Warehouse** : Mise en place d'un entrepôt de données pour l'analytics avancé
-- **Streaming** : Intégration de données en temps réel (Kafka, Apache Flink)
-- **Multi-tenant** : Support de plusieurs clients B2B avec isolation des données
+- **Scalabilité** : Migration vers une architecture microservices
+- **Data Warehouse** : Entrepôt de données pour l'analytics avancé
+- **Multi-tenant B2B** : Isolation des données par client
 
 ---
 
 ## 7. Conclusion
 
-Le projet a permis de mettre en place un backend métier complet et fonctionnel pour HealthAI Coach. L'architecture choisie est modulaire, évolutive et respecte les bonnes pratiques de développement. Les fonctionnalités de base sont opérationnelles et prêtes pour l'intégration dans l'écosystème global de la startup.
-
-Les principaux défis ont été relevés avec succès, notamment la gestion de données hétérogènes et la mise en place d'un pipeline ETL robuste. Les perspectives d'évolution sont nombreuses et permettront d'enrichir progressivement la plateforme.
+Le projet a permis de mettre en place un backend métier complet et fonctionnel pour HealthAI Coach. L'architecture modulaire (ETL + API FastAPI + Interface Next.js + Supabase) est reproductible en une commande Docker et respecte les bonnes pratiques de développement. La migration de Streamlit vers Next.js a permis d'atteindre un niveau d'accessibilité conforme aux exigences RGAA AA.
 
 ---
 
@@ -279,12 +263,15 @@ Les principaux défis ont été relevés avec succès, notamment la gestion de d
 
 ```
 MSPR1/
-├── api/                    # Service FastAPI
-├── web/                    # Interface Next.js
-├── etl/                    # Pipeline ETL
-├── docs/                   # Documentation
-├── test/                   # Tests
-└── docker-compose.yml      # Orchestration
+├── api/                    # Service FastAPI (Python)
+├── web/                    # Interface Next.js (TypeScript)
+├── etl/                    # Pipeline ETL (Python + Pandas)
+│   ├── logs/               # Logs et rapports d'exécution
+│   └── data/               # Datasets CSV
+├── docs/                   # Documentation complète
+├── supabase/migrations/    # Scripts SQL versionnés
+├── test/                   # Tests automatisés (pytest)
+└── docker-compose.yml      # Orchestration Docker
 ```
 
 ### 8.2. Documentation Complémentaire
@@ -292,22 +279,24 @@ MSPR1/
 - `docs/RAPPORT_INVENTAIRE_SOURCES.md` : Inventaire des sources de données
 - `docs/DIAGRAMME_FLUX_DONNEES.md` : Diagramme des flux de données
 - `docs/API_ENDPOINTS.md` : Documentation des endpoints API
-- `docs/MCD.txt` et `docs/MLD.txt` : Modèles de données
+- `docs/MCD.txt`, `docs/MLD.txt`, `docs/MPD.md` : Modèles de données
+- `docs/AUDIT_RGAA.md` : Audit accessibilité RGAA AA
 
 ### 8.3. Technologies Utilisées
 
-- **Python** : 3.10+
-- **FastAPI** : 0.104.1
-- **Streamlit** : 1.28.0
-- **Pandas** : 2.1.0
-- **Supabase** : 2.0.3
-- **PostgreSQL** : 15+ (via Supabase)
-- **Docker** : 24+
-- **Docker Compose** : 2.20+
+| Composant | Technologie | Version |
+|---|---|---|
+| Base de données | PostgreSQL via Supabase | 15+ |
+| API | FastAPI + Pydantic v2 | 0.104+ |
+| Interface web | Next.js + React | 15 / 19 |
+| CSS | Tailwind CSS | v4 |
+| ETL | Python + Pandas | 3.10+ / 2.1+ |
+| Planification | APScheduler | 3.10+ |
+| Orchestration | Docker + Docker Compose | 24+ / 2.20+ |
+| Tests | pytest | 7+ |
 
 ---
 
-**Document généré le** : 2025  
-**Version** : 1.0  
+**Document généré le** : Avril 2026  
+**Version** : 2.0  
 **Auteur** : Équipe MSPR TPRE501
-

@@ -30,16 +30,6 @@ else
     echo ""
 fi
 
-# Port front pour les messages (aligné sur docker-compose : ${WEB_PORT:-8000})
-WEB_PORT_DISPLAY=8000
-if [ -f .env ]; then
-    set -a
-    # shellcheck disable=SC1091
-    source .env
-    set +a
-fi
-WEB_PORT_DISPLAY="${WEB_PORT:-8000}"
-
 # Créer le dossier data pour l'ETL s'il n'existe pas
 if [ ! -d "etl/data" ]; then
     mkdir -p etl/data

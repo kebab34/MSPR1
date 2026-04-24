@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { apiFetch } from "@/lib/api";
 import { fetchUsersForPicker, labelUser, type PickUser } from "@/lib/picker-users";
 import { PageHeader, Btn, Card, Input, Select, Alert, SkeletonTable, EmptyState, Badge } from "@/components/ui";
-import { IconPlus, IconAlertCircle, IconCheck, IconCalendar, IconLeaf, IconFlame } from "@/components/icons";
+import { IconPlus, IconAlertCircle, IconCheck, IconCalendar, IconLeaf, IconFlame, IconSearch, IconTrash, IconDownload } from "@/components/icons";
 
 type Row = {
   id_journal: string;
@@ -41,13 +41,16 @@ export default function JournalPage() {
   const [dateFin, setDateFin] = useState(today);
   const [dateEntree, setDateEntree] = useState(today);
   const [alimentId, setAlimentId] = useState("");
+  const [alimentSearch, setAlimentSearch] = useState("");
+  const [showAlimentDrop, setShowAlimentDrop] = useState(false);
+  const alimentRef = useRef<HTMLDivElement>(null);
   const [quantite, setQuantite] = useState("100");
 
   useEffect(() => {
     if (!token || !profile) return;
     Promise.all([
       fetchUsersForPicker(token, profile),
-      apiFetch<Aliment[]>("/aliments", { token }),
+      apiFetch<Aliment[]>("/aliments", { token, params: { limit: "1000" } }),
     ]).then(([u, a]) => {
       setUsers(u);
       setAliments(Array.isArray(a) ? a : []);
@@ -55,7 +58,6 @@ export default function JournalPage() {
   }, [token, profile]);
 
   useEffect(() => { if (users.length && !userId) setUserId(users[0].id_utilisateur); }, [users, userId]);
-  useEffect(() => { if (aliments.length && !alimentId) setAlimentId(aliments[0].id_aliment); }, [aliments, alimentId]);
 
   useEffect(() => {
     if (!token || !userId) return;
@@ -66,6 +68,29 @@ export default function JournalPage() {
       .catch((e) => { if (!cancelled) { setErr(String(e)); setLoading(false); } });
     return () => { cancelled = true; };
   }, [token, userId, dateDebut, dateFin]);
+
+  async function onDelete(id: string) {
+    if (!token || !confirm("Supprimer cette entrée ?")) return;
+    try {
+      await apiFetch(`/journal/${id}`, { method: "DELETE", token });
+      setRows((prev) => prev.filter((r) => r.id_journal !== id));
+    } catch (ex) {
+      setErr(ex instanceof Error ? ex.message : String(ex));
+    }
+  }
+
+  function exportCSV() {
+    const headers = ["date_consommation", "aliment", "quantite_g", "calories_kcal"];
+    const csv = [headers.join(","), ...rows.map((r) => {
+      const a = aliMap[r.id_aliment];
+      const cal = a ? Math.round(a.calories * r.quantite / 100) : "";
+      return [r.date_consommation ?? "", a?.nom ?? r.id_aliment, r.quantite, cal].join(",");
+    })].join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    a.download = "journal.csv";
+    a.click();
+  }
 
   async function onAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -91,6 +116,23 @@ export default function JournalPage() {
 
   const aliMap = Object.fromEntries(aliments.map((a) => [a.id_aliment, a]));
 
+  const alimentsSuggestions = useMemo(() => {
+    if (!alimentSearch.trim()) return aliments.slice(0, 8);
+    const q = alimentSearch.toLowerCase();
+    return aliments.filter((a) => a.nom.toLowerCase().includes(q)).slice(0, 8);
+  }, [aliments, alimentSearch]);
+
+  // Fermer le dropdown au clic extérieur
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (alimentRef.current && !alimentRef.current.contains(e.target as Node)) {
+        setShowAlimentDrop(false);
+      }
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
   // Daily nutrition totals
   const todayRows = rows.filter((r) => r.date_consommation?.startsWith(today));
   const todayCal = todayRows.reduce((s, r) => {
@@ -104,9 +146,10 @@ export default function JournalPage() {
         title="Journal alimentaire"
         subtitle="Suivez vos apports nutritionnels quotidiens"
         action={
-          <Btn size="sm" onClick={() => setShowForm(!showForm)}>
-            <IconPlus size={14} /> Ajouter
-          </Btn>
+          <div className="flex gap-2">
+            {rows.length > 0 && <Btn size="sm" variant="ghost" onClick={exportCSV}><IconDownload size={14} /> CSV</Btn>}
+            <Btn size="sm" onClick={() => setShowForm(!showForm)}><IconPlus size={14} /> Ajouter</Btn>
+          </div>
         }
       />
 
@@ -132,9 +175,40 @@ export default function JournalPage() {
           <h2 className="text-sm font-semibold text-white mb-4">Nouvelle entrée</h2>
           <form onSubmit={onAdd} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Input label="Date" type="date" value={dateEntree} onChange={(e) => setDateEntree(e.target.value)} />
-            <Select label="Aliment" value={alimentId} onChange={(e) => setAlimentId(e.target.value)}>
-              {aliments.map((a) => <option key={a.id_aliment} value={a.id_aliment}>{a.nom}</option>)}
-            </Select>
+
+            {/* Autocomplete aliment */}
+            <div className="relative" ref={alimentRef}>
+              <label className="block text-xs text-slate-400 mb-1">Aliment</label>
+              <div className="relative">
+                <IconSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Rechercher un aliment…"
+                  value={alimentSearch}
+                  onChange={(e) => { setAlimentSearch(e.target.value); setAlimentId(""); setShowAlimentDrop(true); }}
+                  onFocus={() => setShowAlimentDrop(true)}
+                  className="w-full pl-8 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              {showAlimentDrop && alimentsSuggestions.length > 0 && (
+                <ul className="absolute z-50 mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-auto max-h-52">
+                  {alimentsSuggestions.map((a) => (
+                    <li
+                      key={a.id_aliment}
+                      onMouseDown={() => { setAlimentId(a.id_aliment); setAlimentSearch(a.nom); setShowAlimentDrop(false); }}
+                      className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-slate-700 text-sm"
+                    >
+                      <span className="text-slate-200">{a.nom}</span>
+                      <span className="text-xs text-amber-400 shrink-0 ml-2">{a.calories} kcal</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {alimentId && (
+                <p className="mt-1 text-xs text-emerald-400">✓ {aliMap[alimentId]?.nom}</p>
+              )}
+            </div>
+
             <Input label="Quantité (g)" type="number" step="1" min="1" value={quantite} onChange={(e) => setQuantite(e.target.value)} />
             <div className="sm:col-span-3 flex gap-2">
               <Btn type="submit" loading={saving} size="sm">Enregistrer</Btn>
@@ -167,7 +241,7 @@ export default function JournalPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-slate-800/50 border-b border-slate-800">
-                {["Date", "Aliment", "Quantité", "Calories", "Protéines / Glucides / Lipides"].map((h) => (
+                {["Date", "Aliment", "Quantité", "Calories", "Protéines / Glucides / Lipides", ""].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -205,6 +279,11 @@ export default function JournalPage() {
                           <Badge variant="red">{lip}g L</Badge>
                         </div>
                       ) : <span className="text-slate-600">—</span>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <button onClick={() => onDelete(r.id_journal)} className="text-slate-600 hover:text-red-400 transition-colors">
+                        <IconTrash size={14} />
+                      </button>
                     </td>
                   </tr>
                 );

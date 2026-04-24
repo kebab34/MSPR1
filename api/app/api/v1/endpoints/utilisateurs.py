@@ -22,7 +22,7 @@ def _is_email_unique_violation(exc: BaseException) -> bool:
 async def get_utilisateurs(
     _admin: dict = Depends(require_admin),
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=10_000),
+    limit: int = Query(100, ge=1, le=1000),
     type_abonnement: Optional[str] = None
 ):
     """Récupérer la liste des utilisateurs (admin)"""

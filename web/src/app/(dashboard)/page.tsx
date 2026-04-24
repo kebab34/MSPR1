@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import { apiFetch } from "@/lib/api";
-import { fetchAll } from "@/lib/fetch-all";
 import { StatCard, Card, Skeleton } from "@/components/ui";
 import {
   IconUsers, IconLeaf, IconDumbbell, IconBook,
@@ -34,8 +33,8 @@ export default function HomePage() {
     (async () => {
       try {
         const [a, e] = await Promise.all([
-          apiFetch<unknown[]>("/aliments", { token }),
-          apiFetch<unknown[]>("/exercices", { token }),
+          apiFetch<unknown[]>("/aliments", { token, params: { limit: "1000" } }),
+          apiFetch<unknown[]>("/exercices", { token, params: { limit: "1000" } }),
         ]);
         if (!cancelled) {
           setStats({
@@ -144,7 +143,7 @@ export default function HomePage() {
 function AdminUserStat({ token }: { token: string }) {
   const [count, setCount] = useState<number | null>(null);
   useEffect(() => {
-    fetchAll<unknown>("/utilisateurs", token).then((d) => setCount(d.length)).catch(() => {});
+    apiFetch<unknown[]>("/utilisateurs", { token, params: { limit: "1000" } }).then((d) => setCount(Array.isArray(d) ? d.length : 0)).catch(() => {});
   }, [token]);
   return (
     <StatCard

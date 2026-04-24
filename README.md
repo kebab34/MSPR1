@@ -107,7 +107,7 @@ L'API FastAPI est exposée sur le port **8001** côté hôte dans ce dépôt (`8
 
 ### Interface web (Next.js)
 
-L'interface est servie sur le port **3000** (ou `WEB_PORT` dans `.env`). Les appels API passent par le proxy ` /api/mspr/* ` (voir `web/src/app/api/mspr/`), via `API_URL` (dans le `docker-compose` du dépôt : `http://host.docker.internal:8001` quand l’hôte n’arrive pas à joindre l’API en réseau bridge).
+L'interface est servie sur le port **3000**. Les appels API passent par le proxy interne ` /api/mspr/* ` (voir `web/src/app/api/mspr/`), configuré avec `API_URL` (souvent `http://api:8000` dans Docker).
 
 #### Développement local sans Docker pour le front
 
@@ -178,9 +178,7 @@ Les tests peuvent être ajoutés dans chaque service :
 | `DATABASE_URL` | URL de connexion PostgreSQL | `postgresql://postgres:pass@...` |
 | `JWT_SECRET` | Secret pour JWT | `your-secret-key` |
 | `ETL_SCHEDULE` | Planning ETL (format cron) | `0 */6 * * *` |
-| `API_URL` | URL de l'API pour le **conteneur web** (proxy serveur) | Voir `docker-compose.yml` (souvent `http://host.docker.internal:8001`) |
-
-**La base ne se connecte pas ?** Vérifier : `supabase start`, ports **54321** (API) et **54322** (Postgres) — *ne pas* mettre l’URL du **Studio (54323)** en `SUPABASE_URL`. Détails : [docs/SUPABASE_LOCAL.md](docs/SUPABASE_LOCAL.md) et script `./scripts/verify_stack.sh`.
+| `API_URL` | URL de l'API pour le **conteneur web** (proxy serveur) | `http://api:8000` |
 
 ## 🧪 Tests
 
@@ -222,9 +220,6 @@ docker-compose exec <service> <command>
 ```
 
 ## 📊 Supabase
-
-- Guide local (ports, Docker, `SUPABASE_URL` vs Studio) : [docs/SUPABASE_LOCAL.md](docs/SUPABASE_LOCAL.md)
-- Vérification machine : `./scripts/verify_stack.sh`
 
 ### Configuration de la base de données
 

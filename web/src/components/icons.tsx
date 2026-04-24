@@ -24,6 +24,8 @@ export {
   LineChart as IconLineChart,
   Menu as IconMenu,
   X as IconX,
+  Trash2 as IconTrash,
+  Download as IconDownload,
 } from "lucide-react";
 
 export type { LucideProps } from "lucide-react";

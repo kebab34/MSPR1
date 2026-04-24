@@ -1,11 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { apiFetch } from "@/lib/api";
 import { fetchUsersForPicker, labelUser, type PickUser } from "@/lib/picker-users";
 import { PageHeader, Btn, Card, Input, Select, Alert, SkeletonTable, EmptyState, Badge } from "@/components/ui";
-import { IconTimer, IconPlus, IconAlertCircle, IconCheck, IconCalendar, IconZap } from "@/components/icons";
+import { IconTimer, IconPlus, IconAlertCircle, IconCheck, IconCalendar, IconZap, IconSearch, IconX, IconDumbbell, IconTrash, IconDownload } from "@/components/icons";
+
+type SessionExercice = {
+  id_exercice: string;
+  nombre_series?: number;
+  nombre_repetitions?: number;
+  poids?: number;
+  exercices?: { nom: string };
+};
 
 type Session = {
   id_session: string;
@@ -14,6 +22,17 @@ type Session = {
   intensite?: string;
   date_session?: string;
   created_at: string;
+  session_exercices?: SessionExercice[];
+};
+
+type Exercice = { id_exercice: string; nom: string; groupe_musculaire?: string };
+
+type ExerciceSelection = {
+  id_exercice: string;
+  nom: string;
+  nombre_series: string;
+  nombre_repetitions: string;
+  poids: string;
 };
 
 const INTENSITE_BADGE: Record<string, "emerald" | "amber" | "red"> = {
@@ -44,10 +63,36 @@ export default function SessionsPage() {
   const [duree, setDuree] = useState("45");
   const [intensite, setIntensite] = useState<"faible" | "moderee" | "elevee">("moderee");
 
+  // Exercices
+  const [allExercices, setAllExercices] = useState<Exercice[]>([]);
+  const [exSearch, setExSearch] = useState("");
+  const [showExDrop, setShowExDrop] = useState(false);
+  const [selectedEx, setSelectedEx] = useState<ExerciceSelection[]>([]);
+  const exRef = useRef<HTMLDivElement>(null);
+
+  const exSuggestions = useMemo(() => {
+    const q = exSearch.toLowerCase();
+    return allExercices
+      .filter((e) => !selectedEx.find((s) => s.id_exercice === e.id_exercice))
+      .filter((e) => !q || e.nom.toLowerCase().includes(q))
+      .slice(0, 8);
+  }, [allExercices, exSearch, selectedEx]);
+
   useEffect(() => {
     if (!token || !profile) return;
     fetchUsersForPicker(token, profile).then(setUsers).catch(() => {});
+    apiFetch<Exercice[]>("/exercices", { token, params: { limit: "1000" } })
+      .then((d) => setAllExercices(Array.isArray(d) ? d : []))
+      .catch(() => {});
   }, [token, profile]);
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (exRef.current && !exRef.current.contains(e.target as Node)) setShowExDrop(false);
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
 
   useEffect(() => {
     if (users.length && !userId) setUserId(users[0].id_utilisateur);
@@ -63,6 +108,27 @@ export default function SessionsPage() {
     return () => { cancelled = true; };
   }, [token, userId, dateDebut, dateFin]);
 
+  async function onDelete(id: string) {
+    if (!token || !confirm("Supprimer cette session ?")) return;
+    try {
+      await apiFetch(`/sessions/${id}`, { method: "DELETE", token });
+      setRows((prev) => prev.filter((s) => s.id_session !== id));
+    } catch (ex) {
+      setErr(ex instanceof Error ? ex.message : String(ex));
+    }
+  }
+
+  function exportCSV() {
+    const headers = ["date_session", "duree_min", "intensite"];
+    const csv = [headers.join(","), ...rows.map((s) =>
+      [s.date_session ?? "", s.duree ?? "", s.intensite ?? ""].join(",")
+    )].join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    a.download = "sessions.csv";
+    a.click();
+  }
+
   async function onAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!token || !userId) return;
@@ -72,10 +138,23 @@ export default function SessionsPage() {
       if (!d || d < 1) throw new Error("Durée invalide");
       await apiFetch("/sessions", {
         method: "POST", token,
-        body: { id_utilisateur: userId, duree: d, intensite, date_session: new Date(dateSession).toISOString() },
+        body: {
+          id_utilisateur: userId,
+          duree: d,
+          intensite,
+          date_session: new Date(dateSession).toISOString(),
+          exercices: selectedEx.map((ex) => ({
+            id_exercice: ex.id_exercice,
+            nombre_series: ex.nombre_series ? parseInt(ex.nombre_series) : null,
+            nombre_repetitions: ex.nombre_repetitions ? parseInt(ex.nombre_repetitions) : null,
+            poids: ex.poids ? parseFloat(ex.poids) : null,
+          })),
+        },
       });
       setMsg("Session enregistrée.");
       setShowForm(false);
+      setSelectedEx([]);
+      setExSearch("");
       const data = await apiFetch<Session[]>("/sessions", { token, params: { utilisateur_id: userId, date_debut: dateDebut, date_fin: dateFin } });
       setRows(Array.isArray(data) ? data : []);
     } catch (ex) {
@@ -95,9 +174,10 @@ export default function SessionsPage() {
         title="Sessions sport"
         subtitle="Historique de vos séances d'entraînement"
         action={
-          <Btn size="sm" onClick={() => setShowForm(!showForm)}>
-            <IconPlus size={14} /> Nouvelle session
-          </Btn>
+          <div className="flex gap-2">
+            {rows.length > 0 && <Btn size="sm" variant="ghost" onClick={exportCSV}><IconDownload size={14} /> CSV</Btn>}
+            <Btn size="sm" onClick={() => setShowForm(!showForm)}><IconPlus size={14} /> Nouvelle session</Btn>
+          </div>
         }
       />
 
@@ -108,22 +188,95 @@ export default function SessionsPage() {
       {showForm && (
         <Card>
           <h2 className="text-sm font-semibold text-white mb-4">Nouvelle session</h2>
-          <form onSubmit={onAdd} className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Input label="Date" type="date" value={dateSession} onChange={(e) => setDateSession(e.target.value)} />
-            <Input label="Durée (min)" type="number" min={1} value={duree} onChange={(e) => setDuree(e.target.value)} />
-            <Select label="Intensité" value={intensite} onChange={(e) => setIntensite(e.target.value as typeof intensite)}>
-              <option value="faible">Faible</option>
-              <option value="moderee">Modérée</option>
-              <option value="elevee">Élevée</option>
-            </Select>
-            {users.length > 1 && (
-              <Select label="Utilisateur" value={userId} onChange={(e) => setUserId(e.target.value)}>
-                {users.map((u) => <option key={u.id_utilisateur} value={u.id_utilisateur}>{labelUser(u)}</option>)}
+          <form onSubmit={onAdd} className="space-y-4">
+            {/* Infos de base */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <Input label="Date" type="date" value={dateSession} onChange={(e) => setDateSession(e.target.value)} />
+              <Input label="Durée (min)" type="number" min={1} value={duree} onChange={(e) => setDuree(e.target.value)} />
+              <Select label="Intensité" value={intensite} onChange={(e) => setIntensite(e.target.value as typeof intensite)}>
+                <option value="faible">Faible</option>
+                <option value="moderee">Modérée</option>
+                <option value="elevee">Élevée</option>
               </Select>
-            )}
-            <div className="col-span-2 sm:col-span-4 flex gap-2">
+              {users.length > 1 && (
+                <Select label="Utilisateur" value={userId} onChange={(e) => setUserId(e.target.value)}>
+                  {users.map((u) => <option key={u.id_utilisateur} value={u.id_utilisateur}>{labelUser(u)}</option>)}
+                </Select>
+              )}
+            </div>
+
+            {/* Sélecteur d'exercices */}
+            <div>
+              <p className="text-xs text-slate-400 mb-2">Exercices réalisés <span className="text-slate-600">(optionnel)</span></p>
+              <div className="relative" ref={exRef}>
+                <div className="relative">
+                  <IconSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Ajouter un exercice…"
+                    value={exSearch}
+                    onChange={(e) => { setExSearch(e.target.value); setShowExDrop(true); }}
+                    onFocus={() => setShowExDrop(true)}
+                    className="w-full pl-8 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                {showExDrop && exSuggestions.length > 0 && (
+                  <ul className="absolute z-50 mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-auto max-h-48">
+                    {exSuggestions.map((ex) => (
+                      <li
+                        key={ex.id_exercice}
+                        onMouseDown={() => {
+                          setSelectedEx((prev) => [...prev, { id_exercice: ex.id_exercice, nom: ex.nom, nombre_series: "", nombre_repetitions: "", poids: "" }]);
+                          setExSearch("");
+                          setShowExDrop(false);
+                        }}
+                        className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-slate-700 text-sm"
+                      >
+                        <span className="text-slate-200">{ex.nom}</span>
+                        {ex.groupe_musculaire && <span className="text-xs text-slate-500 ml-2 shrink-0">{ex.groupe_musculaire}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* Liste des exercices sélectionnés */}
+              {selectedEx.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {selectedEx.map((ex, i) => (
+                    <div key={ex.id_exercice} className="flex items-center gap-2 bg-slate-800/60 rounded-lg px-3 py-2">
+                      <IconDumbbell size={13} className="text-blue-400 shrink-0" />
+                      <span className="text-sm text-slate-200 flex-1 min-w-0 truncate">{ex.nom}</span>
+                      <input
+                        type="number" min={1} placeholder="Séries"
+                        value={ex.nombre_series}
+                        onChange={(e) => setSelectedEx((prev) => prev.map((s, j) => j === i ? { ...s, nombre_series: e.target.value } : s))}
+                        className="w-16 px-2 py-1 bg-slate-700 border border-slate-600 rounded text-xs text-slate-200 text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                      <input
+                        type="number" min={1} placeholder="Reps"
+                        value={ex.nombre_repetitions}
+                        onChange={(e) => setSelectedEx((prev) => prev.map((s, j) => j === i ? { ...s, nombre_repetitions: e.target.value } : s))}
+                        className="w-16 px-2 py-1 bg-slate-700 border border-slate-600 rounded text-xs text-slate-200 text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                      <input
+                        type="number" min={0} step={0.5} placeholder="kg"
+                        value={ex.poids}
+                        onChange={(e) => setSelectedEx((prev) => prev.map((s, j) => j === i ? { ...s, poids: e.target.value } : s))}
+                        className="w-16 px-2 py-1 bg-slate-700 border border-slate-600 rounded text-xs text-slate-200 text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                      <button type="button" onClick={() => setSelectedEx((prev) => prev.filter((_, j) => j !== i))} className="text-slate-500 hover:text-red-400 transition-colors">
+                        <IconX size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2">
               <Btn type="submit" loading={saving} size="sm">Enregistrer</Btn>
-              <Btn type="button" variant="ghost" size="sm" onClick={() => setShowForm(false)}>Annuler</Btn>
+              <Btn type="button" variant="ghost" size="sm" onClick={() => { setShowForm(false); setSelectedEx([]); setExSearch(""); }}>Annuler</Btn>
             </div>
           </form>
         </Card>
@@ -158,7 +311,7 @@ export default function SessionsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-slate-800/50 border-b border-slate-800">
-                {["Date", "Durée", "Intensité", "Enregistrée le"].map((h) => (
+                {["Date", "Durée", "Intensité", "Exercices", "Enregistrée le", ""].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
@@ -187,7 +340,29 @@ export default function SessionsPage() {
                       </span>
                     ) : <span className="text-slate-600">—</span>}
                   </td>
+                  <td className="px-4 py-3">
+                    {s.session_exercices && s.session_exercices.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {s.session_exercices.map((ex) => (
+                          <span key={ex.id_exercice} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-300 text-xs">
+                            <IconDumbbell size={10} />
+                            {ex.exercices?.nom ?? "—"}
+                            {ex.nombre_series && ex.nombre_repetitions && (
+                              <span className="text-blue-400/60">{ex.nombre_series}×{ex.nombre_repetitions}</span>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-slate-600">—</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-slate-500 text-xs">{fmt(s.created_at)}</td>
+                  <td className="px-4 py-3">
+                    <button onClick={() => onDelete(s.id_session)} className="text-slate-600 hover:text-red-400 transition-colors">
+                      <IconTrash size={14} />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

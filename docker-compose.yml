@@ -33,15 +33,11 @@ services:
       context: ./web
       dockerfile: Dockerfile
     container_name: mspr_web
-    # Même principe que l’API : passer par l’hôte (port publié 8001) si le trafic
-    # conteneur→conteneur est filtré (iptables/UFW), ce qui provoquait timeout/HTTP 500.
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     ports:
       # Hôte : défaut 8000. Pour un autre port, utiliser WEB_PORT dans `.env`.
       - "${WEB_PORT:-8000}:3000"
     environment:
-      - API_URL=http://host.docker.internal:8001
+      - API_URL=http://api:8000
     depends_on:
       - api
     restart: unless-stopped
@@ -60,13 +56,15 @@ services:
       - SUPABASE_URL=http://host.docker.internal:54321
       - SUPABASE_KEY=${SUPABASE_KEY}
       - DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:54322/postgres
-      - ETL_SCHEDULE=${ETL_SCHEDULE:-0 */6 * * *}
+      - KAGGLE_USERNAME=${KAGGLE_USERNAME:-}
+      - KAGGLE_KEY=${KAGGLE_KEY:-}
+      # Planification cron (5 champs). Défaut : lundi 02h00 UTC.
+      - ETL_SCHEDULE=${ETL_SCHEDULE:-0 2 * * 1}
     volumes:
       - ./etl:/app
       - ./etl/data:/app/data
-    # Lance l'ETL une fois au démarrage puis démarre le scheduler.
-    # Le script run_then_schedule.sh évite la boucle restart infinie.
-    command: bash -c "python scheduler.py run; python scheduler.py"
+      - ./etl/logs:/app/logs
+    command: python scheduler.py
     networks:
       - mspr_network
     restart: unless-stopped
