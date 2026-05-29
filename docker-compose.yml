@@ -1,86 +1,155 @@
 services:
-  # API FastAPI
+
+  # ============================================================
+  # SERVICE API — FastAPI (Python)
+  # ============================================================
   api:
     build:
-      context: ./api
+      context: ./api       # dossier contenant le Dockerfile de l'API
       dockerfile: Dockerfile
-    container_name: mspr_api
-    # Linux : sans ceci, host.docker.internal ne se résout pas → erreur DNS / 500 sur les routes Supabase
+    container_name: mspr_api  # nom du conteneur (visible dans "docker ps")
+    # Sur Linux, host.docker.internal ne se résout pas par défaut
+    # Cette ligne ajoute une entrée DNS qui pointe vers la machine hôte
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      # Hôte : API exposée sur 8001 vers le port interne 8000.
+      # Expose le port 8001 de la machine hôte → port 8000 du conteneur
+      # Accès depuis le navigateur : http://localhost:8001/docs
       - "8001:8000"
     environment:
-      # Tout vient du `.env` : cloud (https://xxx.supabase.co) ou local (host.docker.internal).
-      - SUPABASE_URL=${SUPABASE_URL}
+      # URL de Supabase local sur la machine hôte (pas localhost car on est dans Docker)
+      - SUPABASE_URL=http://host.docker.internal:54321
+      # Clé publique Supabase (lue depuis le fichier .env à la racine)
       - SUPABASE_KEY=${SUPABASE_KEY}
+      # Clé de service Supabase (accès total, pour les opérations d'admin)
       - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
-      - DATABASE_URL=${DATABASE_URL}
+      # Connexion PostgreSQL directe (pour les requêtes SQL avancées)
+      - DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:54322/postgres
+      # Clé secrète pour signer les tokens JWT
       - JWT_SECRET=${JWT_SECRET}
+      # Emails des administrateurs (séparés par des virgules), vide par défaut
       - ADMIN_EMAILS=${ADMIN_EMAILS:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - MOCK_AI=${MOCK_AI:-false}
     volumes:
+      # Monte le code source local dans le conteneur → permet le rechargement automatique (--reload)
       - ./api:/app
+    # Surcharge la commande du Dockerfile : ajoute --reload pour le développement (rechargement auto)
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    # L'API démarre seulement après l'ETL (qui peuple la base de données)
     depends_on:
       - etl
+    # Redémarre automatiquement si le conteneur plante (sauf si arrêté manuellement)
     restart: unless-stopped
     networks:
-      - mspr_network
+      - mspr_network  # réseau interne partagé entre tous les services
 
-  # Interface web Next.js (proxy API vers le service `api`)
+  # ============================================================
+  # SERVICE WEB — Next.js (TypeScript / React)
+  # ============================================================
   web:
     build:
       context: ./web
       dockerfile: Dockerfile
     container_name: mspr_web
-    # Linux : réseau bridge entre conteneurs souvent bloqué par iptables.
-    # On passe par l'hôte (host.docker.internal:8001) plutôt que le DNS Docker interne.
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     ports:
-      # Hôte : défaut 8000. Pour un autre port, utiliser WEB_PORT dans `.env`.
+      # Expose sur le port WEB_PORT (défaut 8000) → port 3000 du conteneur
+      # Accès depuis le navigateur : http://localhost:8000
       - "${WEB_PORT:-8000}:3000"
     environment:
-      - API_URL=http://host.docker.internal:8001
+      # URL de l'API FastAPI vue depuis l'intérieur du réseau Docker
+      - API_URL=http://api:8000
+      # URL du microservice de recommandation (MSPR2)
+      - RECO_URL=http://recommendation-service:8002
+    # Le frontend démarre seulement après l'API
     depends_on:
       - api
     restart: unless-stopped
     networks:
       - mspr_network
 
-  # Service ETL
+  # ============================================================
+  # SERVICE RECOMMENDATION — Microservice FastAPI + MongoDB (MSPR2)
+  # ============================================================
+  recommendation-service:
+    build:
+      context: ./recommendation-service
+      dockerfile: Dockerfile
+    container_name: mspr_recommendation
+    ports:
+      - "8002:8002"
+    environment:
+      - MONGODB_URL=mongodb://mongodb:27017
+      - MONGODB_DB=healthai_recommendations
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - MOCK_AI=${MOCK_AI:-false}
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+    networks:
+      - mspr_network
+    volumes:
+      - ./recommendation-service:/app
+
+  # ============================================================
+  # SERVICE MONGODB — Base NoSQL pour les recommandations (MSPR2)
+  # ============================================================
+  mongodb:
+    image: mongo:7.0
+    container_name: mspr_mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+    networks:
+      - mspr_network
+
+  # ============================================================
+  # SERVICE ETL — Pipeline Python (pandas + APScheduler)
+  # ============================================================
   etl:
     build:
       context: ./etl
       dockerfile: Dockerfile
     container_name: mspr_etl
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "host.docker.internal:host-gateway"  # pour accéder à Supabase sur la machine hôte
     environment:
-      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_URL=http://host.docker.internal:54321
       - SUPABASE_KEY=${SUPABASE_KEY}
-      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
-      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:54322/postgres
+      # Credentials Kaggle pour télécharger les datasets automatiquement (optionnels)
       - KAGGLE_USERNAME=${KAGGLE_USERNAME:-}
       - KAGGLE_KEY=${KAGGLE_KEY:-}
-      # Planification cron (5 champs). Défaut : lundi 02h00 UTC.
+      # Planning cron du pipeline ETL (5 champs) : défaut = tous les lundis à 02h00 UTC
+      # Format : "minute heure jour mois jour_semaine"
       - ETL_SCHEDULE=${ETL_SCHEDULE:-0 2 * * 1}
     volumes:
+      # Monte le code source local pour pouvoir modifier l'ETL sans reconstruire l'image
       - ./etl:/app
+      # Monte le dossier data/ séparément pour persister les CSV Kaggle
       - ./etl/data:/app/data
+      # Monte le dossier logs/ pour accéder aux logs et rapports depuis la machine hôte
       - ./etl/logs:/app/logs
+    # Lance scheduler.py : exécute le pipeline immédiatement puis le planifie selon ETL_SCHEDULE
     command: python scheduler.py
     networks:
       - mspr_network
     restart: unless-stopped
 
+# ============================================================
+# RÉSEAU — réseau bridge interne partagé entre les services
+# ============================================================
 networks:
   mspr_network:
-    driver: bridge
+    driver: bridge  # réseau bridge = les conteneurs peuvent se parler par leur nom de service
 
+# ============================================================
+# VOLUMES — stockage persistant
+# ============================================================
 volumes:
   etl_data:
     driver: local
-
-
+  mongodb_data:
+    driver: local
