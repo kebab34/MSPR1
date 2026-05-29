@@ -1,56 +1,52 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Force dynamic: empêche Next.js d'optimiser statiquement ces routes
+// (sinon le body de la requête peut être vide côté serveur)
+export const dynamic = "force-dynamic";
+
 function backendBase(): string {
   return (process.env.API_URL || "http://127.0.0.1:8001").replace(/\/$/, "");
 }
 
-async function forward(
-  request: NextRequest,
-  segments: string[],
-): Promise<NextResponse> {
+async function forward(request: NextRequest, segments: string[]): Promise<NextResponse> {
   const path = segments.join("/");
   const u = new URL(request.url);
   const target = `${backendBase()}/api/v1/${path}${u.search}`;
 
+  // Copie les headers nécessaires (autorisation + type de contenu avec boundary pour multipart)
   const headers = new Headers();
-  for (const name of ["authorization", "content-type", "accept"]) {
+  for (const name of ["authorization", "content-type", "accept", "cookie"]) {
     const v = request.headers.get(name);
     if (v) headers.set(name, v);
   }
 
-  const init: RequestInit = {
-    method: request.method,
-    headers,
-  };
+  const hasBody = !["GET", "HEAD", "DELETE"].includes(request.method);
 
-  if (!["GET", "HEAD", "DELETE"].includes(request.method)) {
-    const body = await request.arrayBuffer();
-    if (body.byteLength) init.body = body;
+  let body: BodyInit | null = null;
+  if (hasBody) {
+    // arrayBuffer préserve les fichiers binaires (uploads photo) et le JSON
+    const buf = await request.arrayBuffer();
+    if (buf.byteLength > 0) body = buf;
   }
 
-  let res: Response;
   try {
-    res = await fetch(target, init);
-  } catch (e) {
-    const msg =
-      e instanceof Error
-        ? e.message
-        : "Erreur réseau vers l'API (vérifie que le service FastAPI tourne, ex. mspr_api sur 8001).";
-    return NextResponse.json(
-      {
-        detail:
-          "Impossible de joindre l'API MSPR. Lance `docker compose up` (ou uvicorn) et ouvre /docs sur le port 8001.",
-        cause: msg,
-      },
-      { status: 502, headers: { "content-type": "application/json" } },
-    );
+    const res = await fetch(target, {
+      method: request.method,
+      headers,
+      body,
+      // @ts-ignore — nécessaire pour le streaming dans Node.js 18+
+      duplex: "half",
+    });
+
+    const resBody = await res.arrayBuffer();
+    const out = new NextResponse(resBody, { status: res.status });
+    const ct = res.headers.get("content-type");
+    if (ct) out.headers.set("content-type", ct);
+    return out;
+  } catch (err) {
+    console.error("[proxy] Erreur vers", target, err);
+    return NextResponse.json({ detail: "Service API inaccessible" }, { status: 503 });
   }
-  const out = new NextResponse(await res.arrayBuffer(), {
-    status: res.status,
-  });
-  const ct = res.headers.get("content-type");
-  if (ct) out.headers.set("content-type", ct);
-  return out;
 }
 
 type Ctx = { params: Promise<{ path: string[] }> };
@@ -59,22 +55,18 @@ export async function GET(request: NextRequest, ctx: Ctx) {
   const { path } = await ctx.params;
   return forward(request, path);
 }
-
 export async function POST(request: NextRequest, ctx: Ctx) {
   const { path } = await ctx.params;
   return forward(request, path);
 }
-
 export async function PUT(request: NextRequest, ctx: Ctx) {
   const { path } = await ctx.params;
   return forward(request, path);
 }
-
 export async function PATCH(request: NextRequest, ctx: Ctx) {
   const { path } = await ctx.params;
   return forward(request, path);
 }
-
 export async function DELETE(request: NextRequest, ctx: Ctx) {
   const { path } = await ctx.params;
   return forward(request, path);
