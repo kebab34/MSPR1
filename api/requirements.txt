@@ -4,14 +4,16 @@ pydantic==2.5.0
 pydantic-settings==2.1.0
 python-jose[cryptography]==3.3.0
 python-multipart==0.0.6
-supabase==2.0.3
-postgrest==0.13.0
+supabase>=2.5.0
+postgrest>=0.16.0
 sqlalchemy==2.0.23
 psycopg2-binary==2.9.9
 alembic==1.12.1
 python-dotenv==1.0.0
-httpx==0.24.1
+httpx>=0.28.1
 email-validator==2.1.0
 pytest==7.4.3
 pytest-asyncio==0.21.1
+google-genai>=1.0.0
+pillow==10.1.0
 
