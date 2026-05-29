@@ -1,0 +1,58 @@
+
+
+
+
+
+
+
+                                    NAVIGATEUR
+                                    │  clique sur "Journal alimentaire"
+                                    ▼
+                                    GET http://localhost:8000/api/mspr/journal
+                                    │
+                                    ▼
+                                    NEXT.JS (proxy interne)
+                                    │  intercepte la requête
+                                    │  ajoute : Authorization: Bearer eyJhbGci...
+                                    │  transforme en :
+                                    ▼
+                                    GET http://api:8000/api/v1/journal
+                                    │
+                                    ▼
+                                    FASTAPI
+                                    │  1. vérifie le token JWT ✓
+                                    │  2. vérifie les droits ✓
+                                    │  3. requête vers Supabase
+                                    ▼
+                                    SUPABASE (PostgreSQL)
+                                    │  renvoie les données brutes
+                                    ▼
+                                    FASTAPI
+                                    │  renvoie en JSON :
+                                    │  [{ "aliment": "Poulet", "calories": 250 }, ...]
+                                    ▼
+                                    NEXT.JS
+                                    │  reçoit le JSON
+                                    │  affiche dans la page
+                                    ▼
+                                    NAVIGATEUR affiche le journal alimentaire
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
